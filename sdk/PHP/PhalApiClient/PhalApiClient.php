@@ -4,9 +4,9 @@
  *
  * - 以接口查询语言（ASQL）的方式来实现接口请求
  * - 出于简明客户端，将全部的类都归于同一个文件，避免过多的加载
- * 
+ *
  * <br>使用示例：<br>
- ```
+```
  * $rs = PhalApiClient::create()
  *   ->withHost('http://demo.phalapi.net/')
  *   ->withService('Default.Index')
@@ -16,11 +16,11 @@
  *
  * var_dump($rs->getRet(), $rs->getData(), $rs->getMsg());
 ```
-    *
-    * @package     PhalApi\SDK
-    * @license     http://www.phalapi.net/license GPL 协议
-    * @link        http://www.phalapi.net/
-    * @author      dogstar <chanzonghuang@gmail.com> 2015-10-16
+ *
+ * @package     PhalApi\SDK
+ * @license     http://www.phalapi.net/license GPL 协议
+ * @link        http://www.phalapi.net/
+ * @author      dogstar <chanzonghuang@gmail.com> 2015-10-16
  */
 
 class PhalApiClient {
@@ -109,6 +109,12 @@ class PhalApiClient {
         return $this;
     }
 
+    public function setParams($data)
+    {
+        $this->params = $data;
+        return $this;
+    }
+
     /**
      * 设置超时时间，单位毫秒
      * @param int $timeoutMs 超时时间，单位毫秒
@@ -188,11 +194,16 @@ class PhalApiClientResponse {
     public function getMsg() {
         return $this->msg;
     }
+
+    public function isSuccess()
+    {
+        return $this->ret >= 200 && $this->ret < 300;
+    }
 }
 
 /**
  * 接口过滤器
- * 
+ *
  * - 可用于接口签名生成
  */
 interface PhalApiClientFilter {
@@ -208,7 +219,7 @@ interface PhalApiClientFilter {
 
 /**
  * 接口结果解析器
- * 
+ *
  * - 可用于不同接口返回格式的处理
  */
 interface PhalApiClientParser {

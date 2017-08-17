@@ -4,7 +4,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-require_once(dirname(__FILE__) . "/PhalApiClient.php");
+require_once(ROOT_PATH . "/sdk/PhalApiClient/PhalApiClient.php");
 
 class ClientCommand extends CConsoleCommand {
 
@@ -21,6 +21,8 @@ class ClientCommand extends CConsoleCommand {
     private $maxInfomationCount = 100; //单次上传最大索引数
     private $maxLogCount = 1000; //单次上传最大日志数
     private $cloudIp = '';
+    protected $clientApi;  // 接口实例
+    protected $clientApiDebugParam = '&debug=1&__debug__=1';
 
     public function __construct($name, $runner) {
         parent::__construct($name, $runner);
@@ -52,6 +54,8 @@ class ClientCommand extends CConsoleCommand {
         $this->key = $this->workStation->access_key;
         $this->upload = Upload::model()->find();
         $this->ftpPort = Yii::app()->params['ftpPort'] !== NULL ? Yii::app()->params['ftpPort'] : '21';
+        $api_url = 'http://dev.phalapi.com/';
+        $this->clientApi = PhalApiClient::create()->withHost($api_url);
     }
 
     /**
@@ -156,7 +160,7 @@ class ClientCommand extends CConsoleCommand {
                     } elseif ($this->workStation->net_way == 2) {
                         $this->ftpUploadFileTwo();
                     } else {
-                        
+
                     }
 
                     //3.上报日志信息
@@ -168,7 +172,7 @@ class ClientCommand extends CConsoleCommand {
             }
         }
     }
-    
+
     public function getUserList()
     {
         $cloudIp = long2ip($this->workStation->cloudIp);
@@ -185,18 +189,18 @@ class ClientCommand extends CConsoleCommand {
         if ($rs->getRet() == 200 && is_array($rsdata['items']) && count($rsdata['items']) > 0) {
             foreach ($rsdata['items'] as $data) {
                 $users = array(
-                'id' => $data['id'],
-                'police_num' => $data['police_num'],
-                'password' => $data['password'],
-                'name' => $data['name'],
-                'sex' => $data['sex'],
-                'mobile_num' => $data['mobile_num'],
-                'role_id' => $data['role_id'],
-                'desc' => $data['desc'],
-                'created_date' => $data['created_date'],
-                'created_by' => $data['created_by'],
-                'status' => $data['status'],
-                'Number' => $data['Number']
+                    'id' => $data['id'],
+                    'police_num' => $data['police_num'],
+                    'password' => $data['password'],
+                    'name' => $data['name'],
+                    'sex' => $data['sex'],
+                    'mobile_num' => $data['mobile_num'],
+                    'role_id' => $data['role_id'],
+                    'desc' => $data['desc'],
+                    'created_date' => $data['created_date'],
+                    'created_by' => $data['created_by'],
+                    'status' => $data['status'],
+                    'Number' => $data['Number']
                 );
                 $userCount = User::getUserByPoliceNum($data['police_num']);
                 if(empty($userCount)){
@@ -204,7 +208,7 @@ class ClientCommand extends CConsoleCommand {
                 }else{
                     $user_result = Yii::app()->db->createCommand()->update('{{user}}', $users,'police_num=:police_num', array(':police_num' => $data['police_num']));
                 }
-                
+
             }
         }
     }
@@ -218,24 +222,24 @@ class ClientCommand extends CConsoleCommand {
         try {
             // 更新用户表
             if ($this->workStation->cloudIp > 0) {
-                    $this->getUserList();
-                    $this->getUnitList();
-                    //更新权限部门信息
-                    /*$this->actionUpdatePermission();
-                    $this->actionGetMatcheByNumber();
-                    $this->actionPutinformations(2);*/
-            
-               
+                $this->getUserList();
+                $this->getUnitList();
+                //更新权限部门信息
+                /*$this->actionUpdatePermission();
+                $this->actionGetMatcheByNumber();
+                $this->actionPutinformations(2);*/
+
+
             } else {
-               
+
             }
         } catch (Exception $e) {
             echo 'Message: ' . $e->getMessage();
         }
     }
-            
 
-            
+
+
 
     //删除文件上报
     public function notifyDeleteFile($archive_num) {
@@ -244,11 +248,11 @@ class ClientCommand extends CConsoleCommand {
         return $result;
     }
 
-            
 
-            
 
-            
+
+
+
 
     /**
      * 上传文件方式二(从平台获取上传文件信息和ftp信息,再上传数据文件)
@@ -404,7 +408,7 @@ class ClientCommand extends CConsoleCommand {
         return false;
     }
 
-            
+
 
     //获取公告
     public function actionNotice() {
@@ -486,18 +490,18 @@ class ClientCommand extends CConsoleCommand {
                 }else{
                     Yii::app()->db->createCommand()->update('{{unit}}', $unit,'Number=:Number',array(':Number' => $data['Number']));
                 }
-                
+
             }
         }
     }
 
-            
+
 
     private function exec_curl($url, $post = array(), $isPost = true, $timeout = 10) {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         if ($isPost) {
-;
+            ;
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
         }
@@ -510,7 +514,7 @@ class ClientCommand extends CConsoleCommand {
 
         return $result;
     }
-            
+
 
     /**
      * 批量上传索引
@@ -518,16 +522,13 @@ class ClientCommand extends CConsoleCommand {
      * @return bool
      */
     public function actionPutinformations($status = 0) {
-        if ($this->workStation->cloudIp <= 0) {
-            return false;
-        }
+
         if ($status == 0) {
             $where = "status = 0";
         } elseif ($status == 2) {
             $e_time = 30 * 86400; //7天之前上传失败的不再次上传
             $where = "status = 2 and upload_date >= {$e_time}";
         }
-        //exit;
         //传输数据索引部分
         $datas = Yii::app()->db->createCommand()
             ->from("sdv_information")
@@ -546,6 +547,7 @@ class ClientCommand extends CConsoleCommand {
         foreach ($datas as $key => $data) {
             $_data[$key] = array(
                 'id' => $data['id'],
+                'wjbh' => $data['archive_num'],
                 'yhbh' => $data['police_num'],
                 'sbbh' => $data['equipment_num'],
                 'wjmc' => $data['file_name'],
@@ -559,29 +561,56 @@ class ClientCommand extends CConsoleCommand {
                 'path' => $data['path'], //远程访问地址
                 'wjsc' => $data['totalTime'],
                 'wjzt' => $data['del_status'] == 3 ? 0 : 1,
-                'bjlj' => Toolkit::getInformationFilePath($data),
-                'wjbh' => Toolkit::getInformationFilePath($data),
+                //TODO:未实现
+                //'bjlj' => Toolkit::getInformationFilePath($data),  //播放路径
+                //'xzlj' => Toolkit::getInformationFilePath($data),  //下载路径
             );
         }
         //print_r($_data);
+
         if (count($_data) > 0) {
-            $url = Toolkit::getTclApiUrl(long2ip($this->workStation->cloudIp), "putInformations", $this->key);
-            echo $url . "\n";
-            //$_data = http_build_query($_data);
-            $result = $this->exec_curl($url, http_build_query($_data), true);
-            $result = json_decode($result, true);
-            if ($result['code'] == 1) {
-                if (isset($result['data']['suc_ids']) && count($result['data']['suc_ids']) > 0) {
-                    Yii::app()->db->createCommand()->update('{{information}}', array('status' => 1), array('in', 'id', $result['data']['suc_ids']));
+            $rs = $this->clientApi->reset()
+                ->withService('Information.Puts')
+                ->setParams(http_build_query($_data))
+                ->withTimeout(15000)
+                ->request();
+
+            if ($rs->isSuccess()) {
+                $result = $rs->getData();
+                $sucIdsStr = '';
+                if (isset($result['suc_ids']) && count($result['suc_ids']) > 0) {
+                    Yii::app()->db->createCommand()->update('{{information}}', array('status' => 1), array('in', 'id', $result['suc_ids']));
+                    $sucIdsStr = implode(',', $result['suc_ids']);
                 }
-                if (isset($result['data']['fail_ids']) && count($result['data']['fail_ids']) > 0) {
+                $failIdsStr = '';
+                if (isset($result['fail_ids']) && count($result['fail_ids']) > 0) {
                     //上传索引失败的数据 status 改为2
-                    Yii::app()->db->createCommand()->update('{{information}}', array('status' => 2), array('in', 'id', $result['data']['fail_ids']));
+                    Yii::app()->db->createCommand()->update('{{information}}', array('status' => 2), array('in', 'id', $result['fail_ids']));
+                    $failIdsStr = implode(',', $result['fail_ids']);
                 }
+                $existedIdsStr = '';
+                if (isset($result['fail_ids']) && count($result['fail_ids']) > 0) {
+                    $existedIdsStr = implode(',', $result['existed_ids']);
+                }
+                empty($sucIdsStr) || Toolkit::log('info', "Information.Puts suc_ids {$sucIdsStr} ", 'Api');
+                empty($failIdsStr) || Toolkit::log('error', "Information.Puts fail_ids {$failIdsStr} ", 'Api');
+                empty($existedIdsStr) || Toolkit::log('warring', "Information.Puts existed_ids {$existedIdsStr} ", 'Api');
+            } else {
+                $ret = $rs->getRet();
+                $errMsg = $rs->getMsg();
+                if(is_array($errMsg)) {
+                    $errMsg = json_decode($errMsg, true);
+                }
+                Toolkit::log('error', "Information.Puts {$ret} {$errMsg} ", 'Api');
             }
-            //msg信息
-            //print_r($result['msg']);
-            //print_r($result);
+            /*
+            echo "\n";
+            var_dump($rs->getRet());
+            echo "\n";
+            print_r($rs->getData());
+            var_dump($rs->getMsg());
+            echo "\n";
+            */
         }
     }
 
@@ -669,5 +698,5 @@ class ClientCommand extends CConsoleCommand {
         return dirname(dirname(dirname(__FILE__)));
     }
 
-            
+
 }

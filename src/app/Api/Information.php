@@ -45,8 +45,8 @@ class Information extends Api {
             'zybj' 	 => array('name' => 'zybj', 'type' => 'enum', 'range' => array(0, 1), 'require' => true, 'desc'=> '执法仪重点标记文件，0：非重点，1：重点'),
             'wjsc' 	 => array('name' => 'wjsc', 'type' => 'int', 'require' => true, 'desc'=> '视频时长，单位秒；若图片则为0'),
             'wjzt' 	 => array('name' => 'wjzt', 'type' => 'enum', 'range' => array(0, 1), 'require' => true, 'desc'=> '文件状态，0：未删除，1：已删除'),
-            'bjlj'  => array('name' => 'bjlj', 'require' => true, 'min' => 1, 'max' => '255', 'desc'=> '可播放的HTTP路径'),
-            'xzlj' 	 => array('name' => 'xzlj', 'require' => true, 'min' => 1, 'max' => '255', 'desc'=> '可下载的HTTP路径'),
+            //'bjlj'  => array('name' => 'bjlj', 'require' => true, 'min' => 1, 'max' => '255', 'desc'=> '可播放的HTTP路径'),
+            //'xzlj' 	 => array('name' => 'xzlj', 'require' => true, 'min' => 1, 'max' => '255', 'desc'=> '可下载的HTTP路径'),
         );
     }
 
@@ -219,8 +219,9 @@ class Information extends Api {
                 'unit_number'   => $val['bmbh'],
                 'totalTime'     => $val['wjsc'],
                 'del_status' => $val['wjzt'],
-                'play_path' => $val['bflj'],
-                'download_path' => $val['xzlj'],
+                //TODO:未实现
+                //'play_path' => $val['bflj'],
+                //'download_path' => $val['xzlj'],
             );
         }
         return $domain->puts($data);
