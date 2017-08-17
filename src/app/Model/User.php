@@ -2,6 +2,7 @@
 namespace App\Model;
 
 use PhalApi\Model\NotORMModel as NotORM;
+use App\Common\Tools as CommonTools;
 
 /**
 
@@ -36,10 +37,9 @@ class User extends NotORM {
         //$id = $user->insert_id();
     }
     public function getListItems($condition, $page, $perpage) {
-        //die($condition['bmbh']);
         return $this->getORM()
             ->select('*')
-            ->where('Number', $condition['bmbh'])
+            ->where('Number', $condition['unit_number'])
             ->order('id DESC')
             ->limit(($page - 1) * $perpage, $perpage)
             ->fetchAll();
@@ -47,9 +47,8 @@ class User extends NotORM {
 
     public function getListTotal($condition) {
         $total = $this->getORM()
-            ->where('Number', $condition['bmbh'])
+            ->where('Number', $condition['unit_number'])
             ->count('id');
-
         return intval($total);
     }
 }

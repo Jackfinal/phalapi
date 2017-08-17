@@ -44,17 +44,10 @@ class Unit {
      * * 获取部门信息接口
      * @desc  根据部门编号获取当前部门和下属部门列表
     */
-    public function getUnit() {
-        $dept_num = $_POST ['dept_num'];
-        if (strlen ( $dept_num ) <= 0) {
-                $this->msg = "Failed to get parameters";
-                return;
-        }
-        $dept_numbers = Toolkit::getAllChildDeptId ( $dept_num );
-        array_push($dept_numbers,$dept_num);
-        $sql = "select * from sdv_unit where Number in ('" . implode ( "','", $dept_numbers ) . "')";
-        $this->data = $this->mysql->fetchArray ( $sql );
-        $this->code = 1;
+    public function getUnitList($condition,$page,$perpage) {
+        $model = new ModelUnit();
+        $dept_numbers = $model->getAllChildDeptId($condition['unit_number']);
+        return $dept_numbers;
     }
     
     
