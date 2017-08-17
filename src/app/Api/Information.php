@@ -45,8 +45,8 @@ class Information extends Api {
             'zybj' 	 => array('name' => 'zybj', 'type' => 'enum', 'range' => array(0, 1), 'require' => true, 'desc'=> '执法仪重点标记文件，0：非重点，1：重点'),
             'wjsc' 	 => array('name' => 'wjsc', 'type' => 'int', 'require' => true, 'desc'=> '视频时长，单位秒；若图片则为0'),
             'wjzt' 	 => array('name' => 'wjzt', 'type' => 'enum', 'range' => array(0, 1), 'require' => true, 'desc'=> '文件状态，0：未删除，1：已删除'),
-            'sltlj'  => array('name' => 'sltlj', 'require' => true, 'min' => 1, 'max' => '255', 'desc'=> '缩略图HTTP路径'),
-            'url' 	 => array('name' => 'url', 'require' => true, 'min' => 1, 'max' => '255', 'desc'=> '文件可播放、可下载的HTTP路径'),
+            'bjlj'  => array('name' => 'bjlj', 'require' => true, 'min' => 1, 'max' => '255', 'desc'=> '可播放的HTTP路径'),
+            'xzlj' 	 => array('name' => 'xzlj', 'require' => true, 'min' => 1, 'max' => '255', 'desc'=> '可下载的HTTP路径'),
         );
     }
 
@@ -176,7 +176,9 @@ class Information extends Api {
     /**
      * 批量上传索引接口
      * @desc 批量上传索引,数据批量入库;通过POST_ROWS 方式 POST 索引列表进,每一个列表都是为包含下列参数的map数组
-     * @return array
+     * @return array suc_ids     成功入库的ids 包括(existed_ids)
+     * @return array existed_ids 通过wjbh检查 已经存在的ids 不进行入库
+     * @return array fail_ids    入库失败的 ids
      * @throws BadRequestException
      */
     public function puts()
@@ -217,8 +219,8 @@ class Information extends Api {
                 'unit_number'   => $val['bmbh'],
                 'totalTime'     => $val['wjsc'],
                 'del_status' => $val['wjzt'],
-                'sltlj' => $val['sltlj'],
-                'url' => $val['url'],
+                'play_path' => $val['bflj'],
+                'download_path' => $val['xzlj'],
             );
         }
         return $domain->puts($data);
