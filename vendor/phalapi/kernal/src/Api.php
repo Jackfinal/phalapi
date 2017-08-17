@@ -208,11 +208,10 @@ class Api {
      * @return boolean
      */
     protected function isServiceWhitelist() {
-        $di = DI();
-        $api = $di->request->getServiceApi();
-        $action = $di->request->getServiceAction();
+        $api = DI()->request->getServiceApi();
+        $action = DI()->request->getServiceAction();
 
-        $serviceWhitelist = $di->config->get('app.service_whitelist', array());
+        $serviceWhitelist = DI()->config->get('app.service_whitelist', array());
         foreach ($serviceWhitelist as $item) {
             $cfgArr = explode('.', $item);
             if (count($cfgArr) < 2) {
@@ -237,12 +236,5 @@ class Api {
      */
     protected function equalOrIngore($str, $cfg) {
         return strcasecmp($str, $cfg) == 0 || $cfg == '*';
-    }
-
-    protected function pdebug($data)
-    {
-        echo "<div><pre>";
-        print_r($data);
-        echo "</pre></div>";
     }
 }

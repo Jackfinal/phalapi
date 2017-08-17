@@ -16,14 +16,11 @@ class JsonpResponse extends Response {
 
     protected $callback = '';
 
-    protected $options;
-
     /**
      * @param string $callback JS回调函数名
      */
-    public function __construct($callback, $options = 0) {
+    public function __construct($callback) {
         $this->callback = $this->clearXss($callback);
-        $this->options = $options;
 
         $this->addHeaders('Content-Type', 'text/javascript; charset=utf-8');
     }
@@ -38,6 +35,6 @@ class JsonpResponse extends Response {
     }
 
     protected function formatResult($result) {
-        echo $this->callback . '(' . json_encode($result, $this->options) . ')';
+        echo $this->callback . '(' . json_encode($result) . ')';
     }
 }

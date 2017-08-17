@@ -13,12 +13,12 @@ return array(
      */
     'servers' => array(
         'db_master' => array(                         //服务器标记
-            'dsn' => 'oci:dbname=//10.104.10.46:1521/orcl;',
-            //'host'      => '10.104.10.37',             //数据库域名
-            //'name'      => 'tcl_cloud',               //数据库名字
+            //'dsn' => 'oci:dbname=//10.104.10.46:1521/orcl;',
+            'host'      => '10.104.10.187',             //数据库域名
+            'name'      => 'tcl_sdvserver',               //数据库名字
             'user'      => 'root',                  //数据库用户名
             'password'  => '111111',	                    //数据库密码
-            //'port'      => 3306,                  //数据库端口
+            'port'      => 3306,                  //数据库端口
             'charset'   => 'UTF8',                  //数据库字符集
         ),
     ),

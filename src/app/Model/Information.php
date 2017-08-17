@@ -16,10 +16,10 @@ CREATE TABLE `phalapi_curd` (
 
  */
 
-class User extends NotORM {
+class Information extends NotORM {
 
     protected function getTableName($id) {
-        return 'user';
+        return 'information';
     }
      //通过archive_num获取数据
     /*public static function getDataByArchiveNum($archive_num,$fields=array('*')){
@@ -35,11 +35,13 @@ class User extends NotORM {
         return $this->getORM()->insert($information);
         //$id = $user->insert_id();
     }
+    /**
+     * 获取用户列表
+     */
     public function getListItems($condition, $page, $perpage) {
-        //die($condition['bmbh']);
         return $this->getORM()
             ->select('*')
-            ->where('Number', $condition['bmbh'])
+            ->where('bmbh', $condition['bmbh'])
             ->order('id DESC')
             ->limit(($page - 1) * $perpage, $perpage)
             ->fetchAll();
@@ -47,9 +49,18 @@ class User extends NotORM {
 
     public function getListTotal($condition) {
         $total = $this->getORM()
-            ->where('Number', $condition['bmbh'])
+            ->where('bmbh', $condition['bmbh'])
             ->count('id');
 
         return intval($total);
     }
+
+    public function getByArchiveNum($archiveNum)
+    {
+        return $this->getORM()
+            ->where('archive_num=:archive_num', array(':archive_num' => $archiveNum))
+            ->fetchOne();
+
+    }
+
 }

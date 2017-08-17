@@ -11,7 +11,7 @@ use PhalApi\Loader;
 use PhalApi\Config\FileConfig;
 use PhalApi\Logger;
 use PhalApi\Logger\FileLogger;
-use PhalApi\Database\NotORMDatabase;
+use App\Common\NotORM;
 
 /** ---------------- 注册&初始化 基本服务组件 ---------------- **/
 
@@ -34,7 +34,7 @@ $di->logger = new FileLogger(API_ROOT . '/runtime', Logger::LOG_LEVEL_DEBUG | Lo
 
 // 数据操作 - 基于NotORM
 //$di->notorm = new NotORMDatabase($di->config->get('dbs'), $di->debug);
-$di->notorm = new \App\Common\NotORM($di->config->get('dbs'), $di->debug);
+$di->notorm = new NotORM($di->config->get('dbs'), $di->debug);
 
 /** ---------------- 定制注册 可选服务组件 ---------------- **/
 
@@ -49,7 +49,7 @@ $di->cache = function () {
     return new \PhalApi\Cache\MemcacheCache(DI()->config->get('sys.mc'));
 };
  */
-
+//$di->response = new \vendor\phalapi\kernal\src\Response\JsonResponse(JSON_UNESCAPED_UNICODE); // 中文显示
 /**
 // 支持JsonP的返回
 if (!empty($_GET['callback'])) {

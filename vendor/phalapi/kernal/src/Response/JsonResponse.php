@@ -14,20 +14,12 @@ use PhalApi\Response;
 
 class JsonResponse extends Response {
 
-    /**
-     * @var int JSON常量组合的二进制掩码
-     * @see http://php.net/manual/en/json.constants.php
-     */
-    protected $options;
-
-    public function __construct($options = 0) {
-        $this->options = $options;
-
+    public function __construct() {
     	$this->addHeaders('Content-Type', 'application/json;charset=utf-8');
     }
     
     protected function formatResult($result) {
-        return json_encode($result, $this->options);
+        return json_encode($result);
     }
     
 }

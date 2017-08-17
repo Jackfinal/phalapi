@@ -1,60 +1,62 @@
 <?php
-/**
- *
- *
- * @Date   : 17/8/16 10:46
- * @author :WR.dong <wangrd@tcl.com>
- */
-
 namespace App\Api;
 
 use PhalApi\Api;
-use App\Domain\User as DomaUser;
+use App\Domain\User as DomainUser;
 /**
- * 用户接口
+ * 用户管理接口服务类
  *
- * @Date   : 17/8/16 10:46
- * @author :WR.dong <wangrd@tcl.com>
  */
-class User extends Api
-{
 
+class User extends Api {
 
     public function getRules() {
         return array(
-            'login' => array(
-                'username' => array('name' => 'username', 'desc' => '用户名'),
-                'password' => array('name' => 'password'),
+            'getUserList' => array(
+                'bmbh' 	=> array('name' => 'bmbh', 'default' => '0', ),
             ),
         );
     }
-
+        
     /**
-     * 登录
-     * @desc 登录
-     * @return array
-     */
-    public function login() {
-        return array('username' => $this->username, 'password' => $this->password);
-    }
-
-    /**
-     * 登录
-     * @desc 登录
-     * @return array
-     */
-    public function logout() {
-        return array();
-    }
-
-    public function info()
+    * 用户上传接口
+    * @desc 用于支队上传用户数据
+    * @return string title 标题
+    * @return string content 内容
+    * @return string version 版本，格式：X.X.X
+    * @return int time 当前时间戳
+    */
+    public function userInfoUpload()
     {
-        $domain = new DomaUser();
-        $rs = $domain->get(1);
-
-        $this->pdebug($rs);
-        echo 'ddd';
-        exit;
+            $data = $_POST;
+            $rs = array();
+            $unit_numbers = array();  //警员的部门编号
+            $this->data = array(
+                    'suc_ids' => array(),
+                    'fail_ids' => array(),
+            );
+            $domain = new DomainInformatin();
+            $id = $domain->fileInfoUpload($data);
+            $rs['id'] = $id;  
+            return ;
     }
-
+    
+    /**
+    * 获取当前部门和下属部门用户
+    * @desc 获取当前部门和下属部门用户
+    * @return string title 标题
+    * @return string content 内容
+    * @return string version 版本，格式：X.X.X
+    * @return int time 当前时间戳
+    */
+    public function getUserList()
+    {
+        $rs = array();
+        $condition = array('bmbh'=>$this->bmbh); 
+        $domain = new DomainUser();
+        $info = $domain->getList($condition);
+        $rs = $info;
+        return $rs;
+    }
+    
 }

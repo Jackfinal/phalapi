@@ -13,7 +13,7 @@ use PDO;
 class NotORM extends \PhalApi\Database\NotORMDatabase
 {
 
-
+    protected $dsn = '';
     /**
      * 针对MySQL的PDO链接，如果需要采用其他数据库，可重载此函数
      * @param array $dbCfg 数据库配置
@@ -29,14 +29,22 @@ class NotORM extends \PhalApi\Database\NotORMDatabase
                 isset($dbCfg['port']) ? $dbCfg['port'] : 3306
             );
         }
+        $this->dsn = $dsn;
         $charset = isset($dbCfg['charset']) ? $dbCfg['charset'] : 'UTF8';
         $pdo = new PDO(
-            $dsn,
+            $this->dsn,
             $dbCfg['user'],
             $dbCfg['password']
         );
         $pdo->exec("SET NAMES '{$charset}'");
-
         return $pdo;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDsn()
+    {
+        return $this->dsn;
     }
 }
