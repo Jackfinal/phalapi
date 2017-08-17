@@ -13,7 +13,9 @@ class User extends Api {
     public function getRules() {
         return array(
             'getUserList' => array(
-                'bmbh' 	=> array('name' => 'bmbh', 'default' => '0', ),
+                'unit_number' 	=> array('name' => 'unit_number', 'require' => true),
+                'page' 	=> array('name' => 'page', 'default' => '1' ),
+                'perpage' 	=> array('name' => 'perpage', 'default' => '20' ),
             ),
         );
     }
@@ -44,18 +46,31 @@ class User extends Api {
     /**
     * 获取当前部门和下属部门用户
     * @desc 获取当前部门和下属部门用户
-    * @return string title 标题
-    * @return string content 内容
-    * @return string version 版本，格式：X.X.X
-    * @return int time 当前时间戳
+    * @return string jybh 警员标号
+    * @return string jyxm 警员姓名
+    * @return string jyxb 警员性别
+    * @return int jyzt 警员状态
+     *@return string bmbh 部门编号 
     */
     public function getUserList()
     {
-        $rs = array();
-        $condition = array('bmbh'=>$this->bmbh); 
+        $rs = array('code' => 0, 'msg' => '', 'items' => array(),'total'=>'');
+        $condition = array('unit_number'=>$this->unit_number); 
+        $page = $this->page;
+        $perpage = $this->perpage;
         $domain = new DomainUser();
-        $info = $domain->getList($condition);
-        $rs = $info;
+        $info = $domain->getList($condition,$page,$perpage);
+        /*foreach($info as $user){
+            $rs[]['jybh'] = $user['police_num'];
+            $rs[]['jyxm'] = $user['name'];
+            $rs[]['jyxb'] = $user['sex'];
+            $rs[]['dhhm'] = $user['mobile_num'];
+            $rs[]['jyzt'] = $user['status'];
+            $rs[]['bmbh'] = $user['Number'];
+        }*/
+        $rs['items'] = $info['items'];
+        $rs['total'] = $info['total'];
+        $rs['code'] = 1;
         return $rs;
     }
     

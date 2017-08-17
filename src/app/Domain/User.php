@@ -2,6 +2,7 @@
 namespace App\Domain;
 
 use App\Model\User as ModelUser;
+use App\Model\Unit as ModelUnit;
 
 class User {
 
@@ -27,10 +28,16 @@ class User {
         return $model->delete($id);
     }*/
 
-    public function getList($condition) {
+    public function getList($condition,$page,$perpage) {
         $rs = array('items' => array(), 'total' => 0);
         $model = new ModelUser();
-        $items = $model->getListItems($condition, 1, 20);
+        $modelUnit = new ModelUnit();
+        $unitList = $modelUnit->getAllChildDeptId($condition['unit_number']);
+        foreach ($unitList as $item) {
+            $unit[] = $item['Number'];
+        }
+        $condition['unit_number'] = $unit;
+        $items = $model->getListItems($condition, $page, $perpage);
         $total = $model->getListTotal($condition);
         
         $rs['items'] = $items;
