@@ -4,6 +4,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
+define('ROOT_PATH','D:\www\sdv');
 require_once(ROOT_PATH . "/sdk/PhalApiClient/PhalApiClient.php");
 
 class ClientCommand extends CConsoleCommand {
@@ -54,7 +55,7 @@ class ClientCommand extends CConsoleCommand {
         $this->key = $this->workStation->access_key;
         $this->upload = Upload::model()->find();
         $this->ftpPort = Yii::app()->params['ftpPort'] !== NULL ? Yii::app()->params['ftpPort'] : '21';
-        $api_url = 'http://dev.phalapi.com/';
+        $api_url = 'http://' . $this->cloudIp . '/api/public/index.php';
         $this->clientApi = PhalApiClient::create()->withHost($api_url);
     }
 
@@ -135,7 +136,7 @@ class ClientCommand extends CConsoleCommand {
             //上报索引
             $this->actionPutinformations(0);
             //下发公告
-            $this->actionNotice();
+            //$this->actionNotice();
         }
     }
 
@@ -524,10 +525,10 @@ class ClientCommand extends CConsoleCommand {
     public function actionPutinformations($status = 0) {
 
         if ($status == 0) {
-            $where = "status = 0";
+            $where = "status2 = 0 ";
         } elseif ($status == 2) {
             $e_time = 30 * 86400; //7天之前上传失败的不再次上传
-            $where = "status = 2 and upload_date >= {$e_time}";
+            $where = "status2 = 20 and upload_date >= {$e_time}";
         }
         //传输数据索引部分
         $datas = Yii::app()->db->createCommand()
@@ -552,21 +553,24 @@ class ClientCommand extends CConsoleCommand {
                 'sbbh' => $data['equipment_num'],
                 'wjmc' => $data['file_name'],
                 'wjdx' => $data['size'],
+				'sjzt' => $data['status'],
+				'sczt' => $data['existed_file'],
+				'ccbs' => $data['path'],
                 'mtlx' => $types[$data['type']],
-                'zybj' => $data['level'] == 3 ? 1 : 0,
+                'zybj' => $data['level'],
                 'pssj' => date('Y-m-d H:i:s', $data['record_date']),
                 'drsj' => date('Y-m-d H:i:s', $data['upload_date']),
-                'gzz_xh' => $this->workStation->station_number,
-                'bmbh' => $this->workStation->unit_number,
+                'gzz_xh' => $data['station_id'],
+                'bmbh' => $data['unit_number'],
                 'path' => $data['path'], //远程访问地址
                 'wjsc' => $data['totalTime'],
-                'wjzt' => $data['del_status'] == 3 ? 0 : 1,
+                'wjzt' => $data['del_status'] == 3 ? 1 : 0,
                 //TODO:未实现
                 //'bjlj' => Toolkit::getInformationFilePath($data),  //播放路径
                 //'xzlj' => Toolkit::getInformationFilePath($data),  //下载路径
             );
         }
-        //print_r($_data);
+        //print_r($_data);die();
 
         if (count($_data) > 0) {
             $rs = $this->clientApi->reset()
@@ -579,14 +583,14 @@ class ClientCommand extends CConsoleCommand {
                 $result = $rs->getData();
                 $sucIdsStr = '';
                 if (isset($result['suc_ids']) && count($result['suc_ids']) > 0) {
-                    Yii::app()->db->createCommand()->update('{{information}}', array('status' => 1), array('in', 'id', $result['suc_ids']));
-                    $sucIdsStr = implode(',', $result['suc_ids']);
+                    //Yii::app()->db->createCommand()->update('{{information}}', array('status2' => 1), array('in', 'id', $result['suc_ids']));
+                    //$sucIdsStr = implode(',', $result['suc_ids']);
                 }
                 $failIdsStr = '';
                 if (isset($result['fail_ids']) && count($result['fail_ids']) > 0) {
                     //上传索引失败的数据 status 改为2
-                    Yii::app()->db->createCommand()->update('{{information}}', array('status' => 2), array('in', 'id', $result['fail_ids']));
-                    $failIdsStr = implode(',', $result['fail_ids']);
+                    //Yii::app()->db->createCommand()->update('{{information}}', array('status2' => 2), array('in', 'id', $result['fail_ids']));
+                    //$failIdsStr = implode(',', $result['fail_ids']);
                 }
                 $existedIdsStr = '';
                 if (isset($result['fail_ids']) && count($result['fail_ids']) > 0) {
@@ -616,6 +620,7 @@ class ClientCommand extends CConsoleCommand {
 
     public function actionPutWsInfo() {
         $upload = Upload::model()->find();
+        $cloudIp = long2ip($this->workStation->cloudIp);
         $workStation = Yii::app()->db->createCommand("select * from sdv_workstation  limit 1")->queryRow();
         if ($this->workStation->cloudIp <= 0) {
             return false;
@@ -642,8 +647,20 @@ class ClientCommand extends CConsoleCommand {
             'cloudIp' => $workStation['cloudIp'],
             'merchant' => $workStation['merchant'],
         );
+        $stationInfo = json_encode($data);
+        print_r($stationInfo);
         //echo Toolkit::getTclApiUrl(long2ip($this->workStation->cloudIp),"putWSInfo",$this->key);
-        $result = $this->exec_curl(Toolkit::getTclApiUrl(long2ip($this->workStation->cloudIp), "putWSInfo", $this->key), $data, true);
+         $client = PhalApiClient::create()
+            ->withHost('http://' . $cloudIp . '/api/public/index.php');
+        $rs = $client->reset()
+            ->withService('Station.stationInfoUpload')
+            ->withParams('stationInfo', $stationInfo)
+            //->setParams(http_build_query($data))
+            ->withTimeout(3000)
+            ->request();
+        $rsdata = $rs->getData();
+        print_r($rsdata);
+        /*$result = $this->exec_curl(Toolkit::getTclApiUrl(long2ip($this->workStation->cloudIp), "putWSInfo", $this->key), $data, true);
         $result = json_decode($result, true);
         echo "\nheartbeat:\n";
         print_r($result);
@@ -688,15 +705,67 @@ class ClientCommand extends CConsoleCommand {
                 $this->actionStationStatus();
             }
         }
-        echo "\nheartbeat end -----------------------------\n";
+        echo "\nheartbeat end -----------------------------\n";*/
     }
-
     /**
      * 获得根目录
      */
     public static function getRootPath() {
         return dirname(dirname(dirname(__FILE__)));
     }
-
+	
+	public function actionPutStations()
+	{
+		$upload = Upload::model()->find();
+        $cloudIp = long2ip($this->workStation->cloudIp);
+		$upload=Upload::model()->find();
+        $workStation=Yii::app()->db->createCommand("select * from sdv_workstation  limit 1")->queryRow();
+        if($workStation['cloudIp']<=0)
+        {
+            return false;
+        }
+        $stations = Yii::app()->db->createCommand("select * from sdv_stations")->queryAll();
+        foreach($stations as $station)
+        {
+    		$data = array(
+    				'ip'=>$station['ip'],
+    				'name'=>$station['name'],
+    				'storage_size'=>$station['storage_size'],
+    				'storage_rest'=>$station['storage_rest'],
+    				'memory_rate'=>$station['memory_rate'],
+    				'cpu_rate'=>$station['cpu_rate'],
+    				'mac_addr'=>$station['mac_addr'],
+    				'client_version'=>$station['client_version'],
+    				'server_version'=>$station['server_version'],
+    				'address'=>$station['address'],
+    				'manager'=>$station['manager'],
+    				'phone'=>$station['phone'],
+    				'station_number'=>$station['station_number'],
+    				'unit_number'=>$station['unit_number'],
+    				'type'=>$station['type'],
+    				'ftpIp'=>$station['ftpIp'],
+    				'ftp_user'=>$station['ftp_user'],
+    				'ftp_pass'=>$station['ftp_pass'],
+                    'created_date'=>$station['created_date'],
+					'online_date'=>$station['online_date'],
+    				'merchant'=>$station['merchant'],
+    		);
+			$stationInfo = json_encode($data);
+			print_r($stationInfo);
+        //echo Toolkit::getTclApiUrl(long2ip($this->workStation->cloudIp),"putWSInfo",$this->key);
+			$client = PhalApiClient::create()
+            ->withHost('http://' . $cloudIp . '/api/public/index.php');
+			$rs = $client->reset()
+            ->withService('Station.stationInfoUpload')
+            ->withParams('stationInfo', $stationInfo)
+            //->setParams(http_build_query($data))
+            ->withTimeout(3000)
+            ->request();
+			$rsdata = $rs->getData();
+    		print_r($rsdata);
+        }
+		 
+	 
+	}
 
 }
