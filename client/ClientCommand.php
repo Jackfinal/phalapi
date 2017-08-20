@@ -4,7 +4,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-define('ROOT_PATH','D:\www\sdv');
+defined('ROOT_PATH') or define('ROOT_PATH','D:\www\sdv');
 require_once(ROOT_PATH . "/sdk/PhalApiClient/PhalApiClient.php");
 
 class ClientCommand extends CConsoleCommand {
@@ -55,7 +55,8 @@ class ClientCommand extends CConsoleCommand {
         $this->key = $this->workStation->access_key;
         $this->upload = Upload::model()->find();
         $this->ftpPort = Yii::app()->params['ftpPort'] !== NULL ? Yii::app()->params['ftpPort'] : '21';
-        $api_url = 'http://' . $this->cloudIp . '/api/public/index.php';
+        $api_url = 'http://' . $this->cloudIp . '/api/public/';
+        //$api_url = 'http://dev.phalapi.com/';
         $this->clientApi = PhalApiClient::create()->withHost($api_url);
     }
 
@@ -178,9 +179,7 @@ class ClientCommand extends CConsoleCommand {
     {
         $cloudIp = long2ip($this->workStation->cloudIp);
         $unit_number = $this->workStation->unit_number;
-        $client = PhalApiClient::create()
-            ->withHost('http://' . $cloudIp . '/api/public/index.php');
-        $rs = $client->reset()
+        $rs = $this->clientApi->reset()
             ->withService('User.getUserList')
             ->withParams('unit_number', $unit_number)
             ->withTimeout(3000)
@@ -462,9 +461,7 @@ class ClientCommand extends CConsoleCommand {
     public function getUnitList() {
         $cloudIp = long2ip($this->workStation->cloudIp);
         $unit_number = $this->workStation->unit_number;
-        $client = PhalApiClient::create()
-            ->withHost('http://' . $cloudIp . '/api/public/index.php');
-        $rs = $client->reset()
+        $rs = $this->clientApi->reset()
             ->withService('Unit.getUnitList')
             ->withParams('unit_number', $unit_number)
             ->withTimeout(3000)
@@ -545,6 +542,8 @@ class ClientCommand extends CConsoleCommand {
             'audio' => 2,
             'photo' =>3
         );
+        $playUrls = Toolkit::getPlayUrls($datas);
+        $downlaodUrls = Toolkit::getDownloadUrls($datas);
         foreach ($datas as $key => $data) {
             $_data[$key] = array(
                 'id' => $data['id'],
@@ -565,9 +564,8 @@ class ClientCommand extends CConsoleCommand {
                 'path' => $data['path'], //远程访问地址
                 'wjsc' => $data['totalTime'],
                 'wjzt' => $data['del_status'] == 3 ? 1 : 0,
-                //TODO:未实现
-                //'bjlj' => Toolkit::getInformationFilePath($data),  //播放路径
-                //'xzlj' => Toolkit::getInformationFilePath($data),  //下载路径
+                'bjlj' => $playUrls[$data['id']],  //播放路径
+                'xzlj' => $downlaodUrls[$data['id']],  //下载路径
             );
         }
         //print_r($_data);die();
@@ -650,9 +648,7 @@ class ClientCommand extends CConsoleCommand {
         $stationInfo = json_encode($data);
         print_r($stationInfo);
         //echo Toolkit::getTclApiUrl(long2ip($this->workStation->cloudIp),"putWSInfo",$this->key);
-         $client = PhalApiClient::create()
-            ->withHost('http://' . $cloudIp . '/api/public/index.php');
-        $rs = $client->reset()
+        $rs = $this->clientApi->reset()
             ->withService('Station.stationInfoUpload')
             ->withParams('stationInfo', $stationInfo)
             //->setParams(http_build_query($data))
@@ -753,9 +749,7 @@ class ClientCommand extends CConsoleCommand {
 			$stationInfo = json_encode($data);
 			print_r($stationInfo);
         //echo Toolkit::getTclApiUrl(long2ip($this->workStation->cloudIp),"putWSInfo",$this->key);
-			$client = PhalApiClient::create()
-            ->withHost('http://' . $cloudIp . '/api/public/index.php');
-			$rs = $client->reset()
+            $rs = $this->clientApi->reset()
             ->withService('Station.stationInfoUpload')
             ->withParams('stationInfo', $stationInfo)
             //->setParams(http_build_query($data))
