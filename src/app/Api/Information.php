@@ -36,6 +36,9 @@ class Information extends Api {
             'bmbh' => array('name' => 'bmbh', 'require' => true, 'min' => 1, 'max' => '30', 'desc'=> '部门编号'),
             'gzz_xh' => array('name' => 'gzz_xh', 'require' => true, 'min' => 1, 'max' => '30', 'desc'=> '采集工作站编号'),
             'sbbh' 	 => array('name' => 'sbbh', 'require' => true, 'min' => 1, 'max' => '30', 'desc'=> '执法记录仪编号'),
+			'sjzt' 	 => array('name' => 'sjzt', 'require' => true, 'min' => 1, 'max' => '30', 'desc'=> '数据状态'),
+			'sczt' 	 => array('name' => 'sczt', 'require' => true, 'min' => 1, 'max' => '30', 'desc'=> '上传状态'),
+			'ccbs' 	 => array('name' => 'ccbs', 'desc'=> '存储标识'),
             'yhbh' 	 => array('name' => 'yhbh', 'require' => true, 'min' => 1, 'max' => '50', 'desc'=> '用户编号'),
             'pssj' 	 => array('name' => 'pssj', 'type' => 'date', 'require' => true, 'format' => 'timestamp', 'desc'=> '拍摄时间'),
             'drsj' 	 => array('name' => 'drsj', 'type' => 'date', 'require' => true, 'format' => 'timestamp', 'desc'=> '导入时间'),
@@ -201,7 +204,6 @@ class Information extends Api {
             }
         }
         $types = array('log', 'video', 'audio', 'photo');
-        $levels = array(1, 3);
         $data = array();
         foreach ($_data as $key => $val) {
             $data[$key] = array(
@@ -211,8 +213,11 @@ class Information extends Api {
                 'equipment_num' => $val['sbbh'],
                 'file_name'     => $val['wjmc'],
                 'size'          => $val['wjdx'],
+				'status'        => $val['sjzt'],
+				'existed_file'  => $val['sczt'],
+				'path'  => $val['ccbs'],
                 'type'          => $types[$val['mtlx']],
-                'level'         => $levels[$val['zybj']],
+                'level'         => $val['zybj'],
                 'record_date'   => $val['pssj'],
                 'upload_date'   => $val['drsj'],
                 'station_id'    => $val['gzz_xh'],
