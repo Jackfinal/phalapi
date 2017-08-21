@@ -4,7 +4,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-defined('ROOT_PATH') or define('ROOT_PATH','D:\www\sdv');
+defined('ROOT_PATH') or define('ROOT_PATH', 'D:\www\sdv');
 require_once(ROOT_PATH . "/sdk/PhalApiClient/PhalApiClient.php");
 
 class ClientCommand extends CConsoleCommand {
@@ -94,7 +94,7 @@ class ClientCommand extends CConsoleCommand {
      *
      */
     public function actionHalfAnHour() {
-
+        
     }
 
     /**
@@ -106,13 +106,12 @@ class ClientCommand extends CConsoleCommand {
         $this->weightRun2();
     }
 
-
     /**
      * 每两小时执行一次的方法
      *
      */
     public function actionTwoHour() {
-
+        
     }
 
     /**
@@ -141,47 +140,40 @@ class ClientCommand extends CConsoleCommand {
         }
     }
 
-    /**
-     * 上传数据
-     */
-    public function weightRun() {
-        ini_set("memory_limit", "600M");
-        // 默认早上10点10分执行上传任务
-        $uploadtask_time = $this->workStation->uploadtask_time;
-        $uploadtask_end = $this->workStation->uploadtask_end;
-        if (strlen($uploadtask_time) <= 0) {
-            $uploadtask_time = "20:30:00";
-        }
-        $time = date('H:i');
-        if ($this->workStation->cloudIp > 0) {
-            // 寻找所有未上传的数据,最多1000条
-            try {
-                if ($time > substr($uploadtask_time, 0, 5) || $time < substr($uploadtask_end, 0, 5)) {
-                    if ($this->workStation->net_way == 1) {
-                        $this->ftpUploadFileOne();
-                    } elseif ($this->workStation->net_way == 2) {
-                        $this->ftpUploadFileTwo();
-                    } else {
-
-                    }
-
-                    //3.上报日志信息
-                    //$this->actionPutWsLog();
-                    $this->actionPutWsLogs();
+    //获取分类列表
+    public function getCategoryList() {
+        $cloudIp = long2ip($this->workStation->cloudIp);
+        $rs = $this->clientApi->reset()
+            ->withService('Category.getCategoryList')
+            ->withTimeout(3000)
+            ->request();
+        $rsdata = $rs->getData();
+        if ($rs->getRet() == 200 && is_array($rsdata['items']) && count($rsdata['items']) > 0) {
+            foreach ($rsdata['items'] as $data) {
+                $category = array(
+                    'id' => $data['flid'],
+                    'pid' => $data['sjfl'],
+                    'cate_name' => $data['flmc'],
+                    'del_status' => $data['flzt'],
+                    'storage_time' => $data['ccsj']
+                );
+                $cateCount = Category::getByKey($data['flid']);
+                if (empty($cateCount)) {
+                    Yii::app()->db->createCommand()->insert('{{category}}', $category);
+                } else {
+                    Yii::app()->db->createCommand()->update('{{category}}', $category, 'id=:id', array(':flid' => $data['flid']));
                 }
-            } catch (Exception $e) {
-                echo 'Message: ' . $e->getMessage();
             }
         }
     }
 
-    public function getUserList()
-    {
+    //获取用户列表
+    public function getUserList() {
         $cloudIp = long2ip($this->workStation->cloudIp);
         $unit_number = $this->workStation->unit_number;
         $rs = $this->clientApi->reset()
             ->withService('User.getUserList')
-            ->withParams('unit_number', $unit_number)
+            ->withParams('bmbh', $unit_number)
             ->withTimeout(3000)
             ->request();
         $rsdata = $rs->getData();
@@ -189,29 +181,28 @@ class ClientCommand extends CConsoleCommand {
         if ($rs->getRet() == 200 && is_array($rsdata['items']) && count($rsdata['items']) > 0) {
             foreach ($rsdata['items'] as $data) {
                 $users = array(
-                    'id' => $data['id'],
-                    'police_num' => $data['police_num'],
-                    'password' => $data['password'],
-                    'name' => $data['name'],
-                    'sex' => $data['sex'],
-                    'mobile_num' => $data['mobile_num'],
-                    'role_id' => $data['role_id'],
-                    'desc' => $data['desc'],
-                    'created_date' => $data['created_date'],
-                    'created_by' => $data['created_by'],
-                    'status' => $data['status'],
-                    'Number' => $data['Number']
+                    'police_num' => $data['yhbh'],
+                    'password' => $data['yhmm'],
+                    'name' => $data['yhxm'] . 'ddd',
+                    'sex' => $data['yhxb'],
+                    'mobile_num' => $data['dhhm'],
+                    'role_id' => $data['yhjs'],
+                    'desc' => "",
+                    'created_date' => "",
+                    'created_by' => "",
+                    'status' => $data['yhzt'],
+                    'Number' => $data['bmbh']
                 );
-                $userCount = User::getUserByPoliceNum($data['police_num']);
-                if(empty($userCount)){
+                $userCount = User::getUserByPoliceNum($data['yhbh']);
+                if (empty($userCount)) {
                     $user_result = Yii::app()->db->createCommand()->insert('{{user}}', $users);
-                }else{
-                    $user_result = Yii::app()->db->createCommand()->update('{{user}}', $users,'police_num=:police_num', array(':police_num' => $data['police_num']));
+                } else {
+                    $user_result = Yii::app()->db->createCommand()->update('{{user}}', $users, 'police_num=:police_num', array(':police_num' => $data['yhbh']));
                 }
-
             }
         }
     }
+
     /**
      * 更新工作站相关的信息
      *
@@ -224,22 +215,18 @@ class ClientCommand extends CConsoleCommand {
             if ($this->workStation->cloudIp > 0) {
                 $this->getUserList();
                 $this->getUnitList();
+                $this->getCategoryList();
                 //更新权限部门信息
-                /*$this->actionUpdatePermission();
-                $this->actionGetMatcheByNumber();
-                $this->actionPutinformations(2);*/
-
-
+                /* $this->actionUpdatePermission();
+                  $this->actionGetMatcheByNumber();
+                  $this->actionPutinformations(2); */
             } else {
-
+                
             }
         } catch (Exception $e) {
             echo 'Message: ' . $e->getMessage();
         }
     }
-
-
-
 
     //删除文件上报
     public function notifyDeleteFile($archive_num) {
@@ -247,12 +234,6 @@ class ClientCommand extends CConsoleCommand {
         $result = $this->exec_curl(Toolkit::getTclApiUrl(long2ip($this->workStation->cloudIp), 'NotifyDeleteFile', $this->key), array('archive_num' => $archive_num));
         return $result;
     }
-
-
-
-
-
-
 
     /**
      * 上传文件方式二(从平台获取上传文件信息和ftp信息,再上传数据文件)
@@ -377,123 +358,37 @@ class ClientCommand extends CConsoleCommand {
         ftp_close($ftp);
     }
 
-    /**
-     * 从平台获取可用的ftp信息
-     * @return array
-     */
-    public function getFTPInfo() {
-        $platform_storage_type = Yii::app()->params['platform_storage_type'];
-        $ftpInfo = array();
-        if ($platform_storage_type == '2') {
-            $result = $this->exec_curl(Toolkit::getTclApiUrl(long2ip($this->workStation->cloudIp), 'GetFTPInfo', $this->key), array('station_number' => $this->workStation->station_number));
-            $result = json_decode($result, true);
-            if (isset($result['code']) && $result['code'] == 1) {
-                return $result['data'];
-            } else {
-                return array();
-            }
-            $workstation_number = $this->workstation['station_number'];
-            $ftpInfo = $this->post('getFTPInfo', array('Number' => $workstation_number));
-        } else {
-            $ftpInfo['ftpip'] = $this->upload->ip;
-            $ftpInfo['ftpPort'] = 21;
-            $ftpInfo['ftpUser'] = $this->upload->name;
-            $ftpInfo['ftpPwd'] = $this->upload->password;
-            $ftpInfo['storageNumber'] = "";
-            $ftpInfo['ftpAlias'] = $this->upload->name;
-        }
-        if (isset($ftpInfo['ftpip'])) {
-            return $ftpInfo;
-        }
-        return false;
-    }
-
-
-
-    //获取公告
-    public function actionNotice() {
-        $workStation = Yii::app()->db->createCommand("select * from sdv_workstation  limit 1")->queryRow();
-        if ($workStation['cloudIp'] <= 0)
-            return false;
-        $result = $this->exec_curl(Toolkit::getTclApiUrl(long2ip($this->workStation->cloudIp), "getNotice", $this->key), array('unit_number' => $this->workStation->unit_number));
-        $result = json_decode($result, true);
-
-        $codes1 = array();
-        if ($result ['code'] == 1 && is_array($result ['data']) && count($result ['data']) > 0) {
-            // 删除所有的公告
-            // Yii::app ()->db->createCommand ( "delete from sdv_notice" )->execute ();
-            foreach ($result ['data'] as $data) {
-                $permission = array(
-                    'id' => $data['id'],
-                    'title' => $data ['title'],
-                    'content' => $data ['content'],
-                    'created_date' => $data ['created_date'],
-                    'unit_number' => $data ['unit_number'],
-                    'created_by' => $data ['created_by'],
-                    'send_date' => $data['send_date'],
-                    'deadline' => $data ['deadline'],
-                    'type' => $data ['type'],
-                    'number_all' => $data ['number_all']
-                );
-                $notice = Yii::app()->db->createCommand("select id from sdv_notice where id = " . $permission['id'] . "")->queryRow();
-
-                if (!$notice) {
-                    // 执行导入
-                    Yii::app()->db->createCommand()->insert('{{notice}}', $permission);
-                } else {
-                    // 执行更新
-                    Yii::app()->db->createCommand()->update('{{notice}}', $permission, 'id=:id', array(':id' => $data['id']));
-                }
-                $codes1[] = $permission['id'];
-            }
-            $notice1 = Yii::app()->db->createCommand("select id from sdv_notice ")->queryAll();
-            $codes = array();
-            foreach ($notice1 as $row) {
-                $codes[] = $row['id'];
-            }
-            $result = array_diff($codes, $codes1);
-            if ($result) {
-                $id = implode(",", $result);
-                Yii::app()->db->createCommand("delete from sdv_notice where id in ({$id})")->execute();
-            }
-        }
-    }
+    //获取部门列表 
     public function getUnitList() {
         $cloudIp = long2ip($this->workStation->cloudIp);
         $unit_number = $this->workStation->unit_number;
         $rs = $this->clientApi->reset()
             ->withService('Unit.getUnitList')
-            ->withParams('unit_number', $unit_number)
+            ->withParams('bmbh', $unit_number)
             ->withTimeout(3000)
             ->request();
         $rsdata = $rs->getData();
-        //print_r($rsdata);die();
         if ($rs->getRet() == 200 && is_array($rsdata) && count($rsdata) > 0) {
             foreach ($rsdata['items'] as $data) {
                 $unit = array(
-                    'id' => $data['id'],
-                    'Name' => $data['Name'].'aaa',
-                    'Number' => $data['Number'],
-                    'Desc' => $data['Desc'],
-                    'parent_number' => $data['parent_number'],
-                    'contact' => $data['contact'],
-                    'phone' => $data['phone'],
-                    'created_date' => $data['created_date'],
-                    'child_count' => $data['child_count']
+                    'Name' => $data['bmmc'],
+                    'Number' => $data['bmbh'],
+                    'Desc' => "",
+                    'parent_number' => $data['sjbm'],
+                    'contact' => $data['lxr'],
+                    'phone' => $data['lxdh'],
+                    'created_date' => "",
+                    'child_count' => ""
                 );
-                $unitCount = Unit::getUnitNameByNumber($data['Number']);
-                //echo $data['Number'];print_r($unitCount);die();
-                if(empty($unitCount)){
+                $unitCount = Unit::getUnitNameByNumber($data['bmbh']);
+                if (empty($unitCount)) {
                     Yii::app()->db->createCommand()->insert('{{unit}}', $unit);
-                }else{
-                    Yii::app()->db->createCommand()->update('{{unit}}', $unit,'Number=:Number',array(':Number' => $data['Number']));
+                } else {
+                    Yii::app()->db->createCommand()->update('{{unit}}', $unit, 'Number=:Number', array(':Number' => $data['bmbh']));
                 }
-
             }
         }
     }
-
-
 
     private function exec_curl($url, $post = array(), $isPost = true, $timeout = 10) {
         $ch = curl_init();
@@ -512,7 +407,6 @@ class ClientCommand extends CConsoleCommand {
 
         return $result;
     }
-
 
     /**
      * 批量上传索引
@@ -540,7 +434,7 @@ class ClientCommand extends CConsoleCommand {
             'log' => 0,
             'video' => 1,
             'audio' => 2,
-            'photo' =>3
+            'photo' => 3
         );
         $playUrls = Toolkit::getPlayUrls($datas);
         $downlaodUrls = Toolkit::getDownloadUrls($datas);
@@ -552,9 +446,9 @@ class ClientCommand extends CConsoleCommand {
                 'sbbh' => $data['equipment_num'],
                 'wjmc' => $data['file_name'],
                 'wjdx' => $data['size'],
-				'sjzt' => $data['status'],
-				'sczt' => $data['existed_file'],
-				'ccbs' => $data['path'],
+                'sjzt' => $data['status'],
+                'sczt' => $data['existed_file'],
+                'ccbs' => $data['path'],
                 'mtlx' => $types[$data['type']],
                 'zybj' => $data['level'],
                 'pssj' => date('Y-m-d H:i:s', $data['record_date']),
@@ -564,8 +458,8 @@ class ClientCommand extends CConsoleCommand {
                 'path' => $data['path'], //远程访问地址
                 'wjsc' => $data['totalTime'],
                 'wjzt' => $data['del_status'] == 3 ? 1 : 0,
-                'bflj' => $playUrls[$data['id']],  //播放路径
-                'xzlj' => $downlaodUrls[$data['id']],  //下载路径
+                'bflj' => $playUrls[$data['id']], //播放路径
+                'xzlj' => $downlaodUrls[$data['id']], //下载路径
             );
         }
         //print_r($_data);die();
@@ -600,19 +494,19 @@ class ClientCommand extends CConsoleCommand {
             } else {
                 $ret = $rs->getRet();
                 $errMsg = $rs->getMsg();
-                if(is_array($errMsg)) {
+                if (is_array($errMsg)) {
                     $errMsg = json_decode($errMsg, true);
                 }
                 Toolkit::log('error', "Information.Puts {$ret} {$errMsg} ", 'Api');
             }
             /*
-            echo "\n";
-            var_dump($rs->getRet());
-            echo "\n";
-            print_r($rs->getData());
-            var_dump($rs->getMsg());
-            echo "\n";
-            */
+              echo "\n";
+              var_dump($rs->getRet());
+              echo "\n";
+              print_r($rs->getData());
+              var_dump($rs->getMsg());
+              echo "\n";
+             */
         }
     }
 
@@ -656,111 +550,60 @@ class ClientCommand extends CConsoleCommand {
             ->request();
         $rsdata = $rs->getData();
         print_r($rsdata);
-        /*$result = $this->exec_curl(Toolkit::getTclApiUrl(long2ip($this->workStation->cloudIp), "putWSInfo", $this->key), $data, true);
-        $result = json_decode($result, true);
-        echo "\nheartbeat:\n";
-        print_r($result);
-        if (isset($result['onlinedate'])) {
-            Yii::app()->db->createCommand("update sdv_workstation set online_time='{$result['onlinedate']}'")->execute();
-        }
-        if ($result['data'] == 2) {
-            if ($workStation['cloudIp'] > 0) {
-                $url = Toolkit::getTclApiUrl(long2ip($workStation['cloudIp']), 'getUser', $this->key);
-                $result = $this->exec_curl($url, array('dept_num' => $workStation['unit_number']));
-                $result = json_decode($result, true);
-                if ($result['code'] == 1 && is_array($result['data']) && count($result['data']) > 0) {
-                    // 删除所有的用户
-                    Yii::app()->db->createCommand("delete from sdv_user where id>1")->execute();
-                    foreach ($result['data'] as $data) {
-                        $users = array(
-                            'id' => $data['id'],
-                            'police_num' => $data['police_num'],
-                            'password' => $data['password'],
-                            'name' => $data['name'],
-                            'sex' => $data['sex'],
-                            'mobile_num' => $data['mobile_num'],
-                            'role_id' => $data['role_id'],
-                            'desc' => $data['desc'],
-                            'created_date' => $data['created_date'],
-                            'created_by' => $data['created_by'],
-                            'status' => $data['status'],
-                            'Number' => $data['Number']
-                        );
-                        Yii::app()->db->createCommand()->insert('{{user}}', $users);
-                    }
-                }
-                //更新设备配对
-                $this->actionGetMatcheByNumber();
-                //更新权限部门信息
-                $this->actionUpdatePermission();
-                //在线升级
-                $this->actionAutoUpgrade();
-                //启动关机 和 重启
-                $this->actionRestartShutdown();
-                //启用 禁用
-                $this->actionStationStatus();
-            }
-        }
-        echo "\nheartbeat end -----------------------------\n";*/
     }
+
     /**
      * 获得根目录
      */
     public static function getRootPath() {
         return dirname(dirname(dirname(__FILE__)));
     }
-	
-	public function actionPutStations()
-	{
-		$upload = Upload::model()->find();
+
+    public function actionPutStations() {
+        $upload = Upload::model()->find();
         $cloudIp = long2ip($this->workStation->cloudIp);
-		$upload=Upload::model()->find();
-        $workStation=Yii::app()->db->createCommand("select * from sdv_workstation  limit 1")->queryRow();
-        if($workStation['cloudIp']<=0)
-        {
+        $upload = Upload::model()->find();
+        $workStation = Yii::app()->db->createCommand("select * from sdv_workstation  limit 1")->queryRow();
+        if ($workStation['cloudIp'] <= 0) {
             return false;
         }
         $stations = Yii::app()->db->createCommand("select * from sdv_stations")->queryAll();
-        foreach($stations as $station)
-        {
-    		$data = array(
-    				'ip'=>$station['ip'],
-    				'name'=>$station['name'],
-    				'storage_size'=>$station['storage_size'],
-    				'storage_rest'=>$station['storage_rest'],
-    				'memory_rate'=>$station['memory_rate'],
-    				'cpu_rate'=>$station['cpu_rate'],
-    				'mac_addr'=>$station['mac_addr'],
-    				'client_version'=>$station['client_version'],
-    				'server_version'=>$station['server_version'],
-    				'address'=>$station['address'],
-    				'manager'=>$station['manager'],
-    				'phone'=>$station['phone'],
-    				'station_number'=>$station['station_number'],
-    				'unit_number'=>$station['unit_number'],
-    				'type'=>$station['type'],
-    				'ftpIp'=>$station['ftpIp'],
-    				'ftp_user'=>$station['ftp_user'],
-    				'ftp_pass'=>$station['ftp_pass'],
-                    'created_date'=>$station['created_date'],
-					'online_date'=>$station['online_date'],
-    				'merchant'=>$station['merchant'],
-    		);
-			$stationInfo = json_encode($data);
-			print_r($stationInfo);
-        //echo Toolkit::getTclApiUrl(long2ip($this->workStation->cloudIp),"putWSInfo",$this->key);
+        foreach ($stations as $station) {
+            $data = array(
+                'ip' => $station['ip'],
+                'name' => $station['name'],
+                'storage_size' => $station['storage_size'],
+                'storage_rest' => $station['storage_rest'],
+                'memory_rate' => $station['memory_rate'],
+                'cpu_rate' => $station['cpu_rate'],
+                'mac_addr' => $station['mac_addr'],
+                'client_version' => $station['client_version'],
+                'server_version' => $station['server_version'],
+                'address' => $station['address'],
+                'manager' => $station['manager'],
+                'phone' => $station['phone'],
+                'station_number' => $station['station_number'],
+                'unit_number' => $station['unit_number'],
+                'type' => $station['type'],
+                'ftpIp' => $station['ftpIp'],
+                'ftp_user' => $station['ftp_user'],
+                'ftp_pass' => $station['ftp_pass'],
+                'created_date' => $station['created_date'],
+                'online_date' => $station['online_date'],
+                'merchant' => $station['merchant'],
+            );
+            $stationInfo = json_encode($data);
+            print_r($stationInfo);
+            //echo Toolkit::getTclApiUrl(long2ip($this->workStation->cloudIp),"putWSInfo",$this->key);
             $rs = $this->clientApi->reset()
-            ->withService('Station.stationInfoUpload')
-            ->withParams('stationInfo', $stationInfo)
-            //->setParams(http_build_query($data))
-            ->withTimeout(3000)
-            ->request();
-			$rsdata = $rs->getData();
-    		print_r($rsdata);
+                ->withService('Station.stationInfoUpload')
+                ->withParams('stationInfo', $stationInfo)
+                //->setParams(http_build_query($data))
+                ->withTimeout(3000)
+                ->request();
+            $rsdata = $rs->getData();
+            print_r($rsdata);
         }
-		 
-	 
-	}
+    }
 
 }
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      

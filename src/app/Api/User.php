@@ -13,9 +13,7 @@ class User extends Api {
     public function getRules() {
         return array(
             'getUserList' => array(
-                'unit_number' 	=> array('name' => 'unit_number', 'require' => true),
-                'page' 	=> array('name' => 'page', 'default' => '1' ),
-                'perpage' 	=> array('name' => 'perpage', 'default' => '20' ),
+                'bmbh' 	=> array('name' => 'bmbh', 'require' => true)
             ),
         );
     }
@@ -46,30 +44,34 @@ class User extends Api {
     /**
     * 获取当前部门和下属部门用户
     * @desc 获取当前部门和下属部门用户
-    * @return string jybh 警员标号
-    * @return string jyxm 警员姓名
-    * @return string jyxb 警员性别
-    * @return int jyzt 警员状态
+    * @return string yhbh 用户编号
+     * @return string yhbh 用户密码
+    * @return string yhxm 用户姓名
+    * @return string yhxb 用户性别
+    * @return string dhhm 电话号码
+     *@return string yhjs 角色编号 
      *@return string bmbh 部门编号 
     */
     public function getUserList()
     {
-        $rs = array('code' => 0, 'msg' => '', 'items' => array(),'total'=>'');
-        $condition = array('unit_number'=>$this->unit_number); 
-        $page = $this->page;
-        $perpage = $this->perpage;
+        $rs = array('code' => 0, 'msg' => '', 'items' => array());
+        $condition = array('bmbh'=>$this->bmbh); 
         $domain = new DomainUser();
-        $info = $domain->getList($condition,$page,$perpage);
-        /*foreach($info as $user){
-            $rs[]['jybh'] = $user['police_num'];
-            $rs[]['jyxm'] = $user['name'];
-            $rs[]['jyxb'] = $user['sex'];
-            $rs[]['dhhm'] = $user['mobile_num'];
-            $rs[]['jyzt'] = $user['status'];
-            $rs[]['bmbh'] = $user['Number'];
-        }*/
-        $rs['items'] = $info['items'];
-        $rs['total'] = $info['total'];
+        $list = $domain->getList($condition);
+        $rsdata = array();
+        $i = 0;
+        foreach($list as $user){
+            $rsdata[$i]['yhbh'] = $user['police_num'];
+            $rsdata[$i]['yhmm'] = $user['password'];
+            $rsdata[$i]['yhxm'] = $user['name'];
+            $rsdata[$i]['yhxb'] = $user['sex'];
+            $rsdata[$i]['dhhm'] = $user['mobile_num'];
+            $rsdata[$i]['yhjs'] = $user['role_id'];
+            $rsdata[$i]['bmbh'] = $user['Number'];
+            $rsdata[$i]['yhzt'] = $user['status'];
+            $i++;
+        }
+        $rs['items'] = $rsdata;
         $rs['code'] = 1;
         return $rs;
     }

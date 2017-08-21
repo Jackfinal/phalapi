@@ -36,12 +36,11 @@ class User extends NotORM {
         return $this->getORM()->insert($information);
         //$id = $user->insert_id();
     }
-    public function getListItems($condition, $page, $perpage) {
+    public function getListItems($condition) {
         return $this->getORM()
             ->select('*')
-            ->where('Number', $condition['unit_number'])
+            ->where('Number', $condition['bmbh'])
             ->order('id DESC')
-            ->limit(($page - 1) * $perpage, $perpage)
             ->fetchAll();
     }
 

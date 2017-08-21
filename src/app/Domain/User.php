@@ -28,21 +28,16 @@ class User {
         return $model->delete($id);
     }*/
 
-    public function getList($condition,$page,$perpage) {
-        $rs = array('items' => array(), 'total' => 0);
+    public function getList($condition) {
+        $rs = array('items' => array());
         $model = new ModelUser();
         $modelUnit = new ModelUnit();
-        $unitList = $modelUnit->getAllChildDeptId($condition['unit_number']);
+        $unitList = $modelUnit->getAllChildDeptId($condition['bmbh']);
         foreach ($unitList as $item) {
             $unit[] = $item['Number'];
         }
-        $condition['unit_number'] = $unit;
-        $items = $model->getListItems($condition, $page, $perpage);
-        $total = $model->getListTotal($condition);
-        
-        $rs['items'] = $items;
-        $rs['total'] = $total;
-
+        $condition['bmbh'] = $unit;
+        $rs = $model->getListItems($condition);
         return $rs;
     }
     /**

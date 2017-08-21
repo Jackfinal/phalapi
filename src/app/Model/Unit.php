@@ -40,26 +40,5 @@ class Unit extends NotORM {
         $data = $unit->fetchAll();
         return $data;
     }
-     
-   /* public function getListItems($condition, $page, $perpage) {
-        $bmbh = $condition['bmbh'];
-        $tools = new CommonTools();
-        $dept_numbers = $tools->getAllChildDeptId($bmbh);
-        array_push($dept_numbers,$dept_num);
-		//$this->data=$this->mysql->fetchArray("select * from sdv_user where 	Number in ('".implode("','",$dept_numbers)."')");
-        return $this->getORM()
-            ->select('*')
-            ->where('Number', $condition['bmbh'])
-            ->order('id DESC')
-            ->limit(($page - 1) * $perpage, $perpage)
-            ->fetchAll();
-    }
-
-    public function getListTotal($condition) {
-        $total = $this->getORM()
-            ->where('Number', $condition['bmbh'])
-            ->count('id');
-
-        return intval($total);
-    }*/
+    
 }
