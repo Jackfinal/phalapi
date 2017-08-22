@@ -56,6 +56,7 @@ class ClientCommand extends CConsoleCommand {
         $this->upload = Upload::model()->find();
         $this->ftpPort = Yii::app()->params['ftpPort'] !== NULL ? Yii::app()->params['ftpPort'] : '21';
         $api_url = 'http://' . $this->cloudIp . '/api/public/';
+        //$api_url = 'http://dev.phalapi.com/';
         $this->clientApi = PhalApiClient::create()->withHost($api_url);
     }
 
@@ -70,7 +71,7 @@ class ClientCommand extends CConsoleCommand {
         $this->lightRun();
     }
 
-            
+
 
     /**
      * 每小时执行一次的方法
@@ -315,14 +316,14 @@ class ClientCommand extends CConsoleCommand {
                 $sucIdsStr = '';
                 if (isset($result['suc_ids']) && count($result['suc_ids']) > 0) {
                     $sucIds = array_keys($result['suc_ids']);
-                    //Yii::app()->db->createCommand()->update('{{information}}', array('status2' => 1), array('in', 'id', $sucIds));
+                    Yii::app()->db->createCommand()->update('{{information}}', array('status2' => 1), array('in', 'id', $sucIds));
                     $sucIdsStr = implode(',', $sucIds);
                 }
                 $failIdsStr = '';
                 if (isset($result['fail_ids']) && count($result['fail_ids']) > 0) {
                     //上传索引失败的数据 status 改为2
                     $failIds = array_keys($result['suc_ids']);
-                    //Yii::app()->db->createCommand()->update('{{information}}', array('status2' => 2), array('in', 'id', $failIds));
+                    Yii::app()->db->createCommand()->update('{{information}}', array('status2' => 2), array('in', 'id', $failIds));
                     $failIdsStr = implode(',', $failIds);
                 }
                 $existedIdsStr = '';
@@ -335,13 +336,19 @@ class ClientCommand extends CConsoleCommand {
                 empty($sucIdsStr) || Toolkit::log('info', "Information.Puts suc_ids {$sucIdsStr} ", 'Api');
                 empty($failIdsStr) || Toolkit::log('error', "Information.Puts fail_ids {$failIdsStr} ", 'Api');
                 empty($existedIdsStr) || Toolkit::log('warring', "Information.Puts existed_ids {$existedIdsStr} ", 'Api');
+                echo sprintf("总数据: %d条\n", count($_data));
+                echo sprintf("上传成功数据: %d条\n", count($result['suc_ids']));
+                echo sprintf("已经存在数据: %d条\n", count($result['existed_ids']));
+                echo sprintf("上传失败数据: %d条\n", count($result['fail_ids']));
             } else {
+                print_r($rs);
                 $ret = $rs->getRet();
                 $errMsg = $rs->getMsg();
                 if (is_array($errMsg)) {
                     $errMsg = json_decode($errMsg, true);
                 }
                 Toolkit::log('error', "Information.Puts {$ret} {$errMsg} ", 'Api');
+                return true;
             }
             /*
               echo "\n";
@@ -440,6 +447,75 @@ class ClientCommand extends CConsoleCommand {
                 ->request();
             $rsdata = $rs->getData();
             print_r($rsdata);
+        }
+    }
+
+    /**
+     * 更新索引信息
+     */
+    public function actionUpdateInformation()
+    {
+        $queueData = Yii::app()->db->createCommand()
+            ->select('id, deal_times')
+            ->from('{{information_queue}}')
+            ->order('deal_times asc, _MASK_SYNC_V2 desc')
+            ->limit(20)
+            ->queryAll();
+        if (empty($queueData)) {
+            echo "没有数据更新1";
+            return true;
+        }
+        $_queueData = array();
+        $ids = array();
+        foreach ($queueData as $k => $v) {
+            $_queueData[$v['id']] = $v['deal_times'];
+            $ids[] = $v['id'];
+        }
+        $queueData = $_queueData;
+        unset($_queueData);
+        print_r($queueData);
+        $datas = Yii::app()->db->createCommand()
+            ->from('{{information}}')
+            ->where(array('in', 'id', $ids))
+            ->queryAll();
+        if (empty($datas)) {
+            Yii::app()->db->createCommand()
+                ->delete('{{information_queue}}', array('in', 'id', $ids));
+            echo "没有数据更新-删除ids";
+            return true;
+        }
+        $playUrls = Toolkit::getPlayUrls($datas);
+        $downlaodUrls = Toolkit::getDownloadUrls($datas);
+        foreach ($datas as $key => $val) {
+            $id = $val['id'];
+            $data = array(
+                'id' => $id,
+                'wjbh' => $val['archive_num'],
+                'sjzt' => $val['status'],
+                'sczt' => $val['existed_file'],
+                'zybj' => $val['level'],
+                'wjzt' => $val['del_status'],
+                'bflj' => $playUrls[$val['id']], //播放路径
+                'xzlj' => $downlaodUrls[$val['id']], //下载路径
+            );
+            $rs = $this->clientApi->reset()
+                ->withService('Information.Update')
+                ->setParams($data)
+                ->withTimeout(3000)
+                ->request();
+            if ($rs->isSuccess()) {
+                Yii::app()->db->createCommand()
+                    ->delete('{{information_queue}}', "id={$id}");
+            } else {
+                if ($queueData[$id] >= 10) {
+                    Yii::app()->db->createCommand()
+                        ->delete('{{information_queue}}', "id={$id}");
+                } else {
+                    Yii::app()->db->createCommand()
+                        ->update('{{information_queue}}', array('id' => $id, 'deal_times' => $queueData[$id] + 1), "id={$id}");
+                }
+                //TODO:日志记录
+            }
         }
     }
 

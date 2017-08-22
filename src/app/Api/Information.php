@@ -18,6 +18,15 @@ class Information extends Api {
             'index' => array(
                 'username' 	=> array('name' => 'username', 'default' => 'PHPer', ),
             ),
+            'update' => array(
+                'archive_num'  => array('name' => 'wjbh', 'require' => true, 'min' => 1, 'max' => '100', 'desc'=> '通过文件编号更新数据'),
+                'status' 	   => array('name' => 'sjzt', 'type' => 'enum', 'range' => array(0, 1), 'desc'=> '数据状态'),
+                'existed_file' => array('name' => 'sczt', 'type' => 'enum', 'range' => array(0, 1), 'desc'=> '上传状态'),
+                'level'        => array('name' => 'zybj', 'type' => 'enum', 'range' => array(1, 2, 3), 'desc'=> '执法仪重要标记文件，1：不重要，2: 中等, 3：重要文件'),
+                'del_status'   => array('name' => 'wjzt', 'type' => 'enum', 'range' => array(0, 1), 'desc'=> '文件删除状态，0：未删除，1：已删除'),
+                'play_path'    => array('name' => 'bflj', 'min' => 1, 'max' => '255', 'desc'=> '可播放的HTTP路径'),
+                'download_path'    => array('name' => 'xzlj', 'min' => 1, 'max' => '255', 'desc'=> '可下载的HTTP路径'),
+            ),
         );
     }
 
@@ -31,13 +40,13 @@ class Information extends Api {
         return array(
             'id' => array('name' => 'id', 'require' => true, 'max' => '11', 'desc'=> '主键id'),
             'wjbh' => array('name' => 'wjbh', 'require' => true, 'min' => 0, 'max' => '100',
-                'desc'=> '文件编号:为该索引的全球唯一编号,且保证通过此编号能够找到原索引'),
+                'desc'=> '文件编号:为该索引的全球唯一编号,且保证通过此编号能够找到原索引,若为空系统会自动创建并返回'),
             'wjmc' => array('name' => 'wjmc', 'require' => true, 'min' => 1, 'max' => '255', 'desc'=> '文件名称'),
             'bmbh' => array('name' => 'bmbh', 'require' => true, 'min' => 1, 'max' => '30', 'desc'=> '部门编号'),
             'gzz_xh' => array('name' => 'gzz_xh', 'require' => true, 'min' => 1, 'max' => '30', 'desc'=> '采集工作站编号'),
             'sbbh' 	 => array('name' => 'sbbh', 'require' => true, 'min' => 1, 'max' => '30', 'desc'=> '执法记录仪编号'),
-			'sjzt' 	 => array('name' => 'sjzt', 'require' => true, 'min' => 1, 'max' => '30', 'desc'=> '数据状态'),
-			'sczt' 	 => array('name' => 'sczt', 'require' => true, 'min' => 1, 'max' => '30', 'desc'=> '上传状态'),
+			'sjzt' 	 => array('name' => 'sjzt', 'type' => 'enum', 'range' => array(0, 1), 'require' => true, 'desc'=> '数据状态'),
+			'sczt' 	 => array('name' => 'sczt', 'type' => 'enum', 'range' => array(0, 1), 'require' => true, 'desc'=> '上传状态'),
 			'ccbs' 	 => array('name' => 'ccbs', 'desc'=> '存储标识'),
             'yhbh' 	 => array('name' => 'yhbh', 'require' => true, 'min' => 1, 'max' => '50', 'desc'=> '用户编号'),
             'pssj' 	 => array('name' => 'pssj', 'type' => 'date', 'require' => true, 'format' => 'timestamp', 'desc'=> '拍摄时间'),
@@ -45,9 +54,9 @@ class Information extends Api {
             'mtlx' 	 => array('name' => 'mtlx', 'type' => 'enum', 'range' => array(0, 1, 2, 3), 'require' => true, 'desc'=> '媒体类型:1 视频, 2 音频,3 图片,4 文本'),
             'wjgs' 	 => array('name' => 'wjgs', 'desc'=> '文件格式，如MP4'),
             'wjdx'   => array('name' => 'wjdx', 'type' => 'int', 'require' => true, 'desc'=> '文件大小，单位Byte'),
-            'zybj' 	 => array('name' => 'zybj', 'type' => 'enum', 'range' => array(0, 1), 'require' => true, 'desc'=> '执法仪重点标记文件，0：非重点，1：重点'),
+            'zybj' 	 => array('name' => 'zybj', 'type' => 'enum', 'range' => array(1, 2, 3), 'require' => true, 'desc'=> '执法仪重点标记文件，1：不重要，2: 中等, 3：重要文件'),
             'wjsc' 	 => array('name' => 'wjsc', 'type' => 'int', 'require' => true, 'desc'=> '视频时长，单位秒；若图片则为0'),
-            'wjzt' 	 => array('name' => 'wjzt', 'type' => 'enum', 'range' => array(0, 1), 'require' => true, 'desc'=> '文件状态，0：未删除，1：已删除'),
+            'wjzt' 	 => array('name' => 'wjzt', 'type' => 'enum', 'range' => array(0, 1), 'require' => true, 'desc'=> '文件删除状态，0：未删除，1：已删除'),
             'bflj'  => array('name' => 'bflj', 'require' => true, 'min' => 1, 'max' => '255', 'desc'=> '可播放的HTTP路径'),
             'xzlj' 	 => array('name' => 'xzlj', 'require' => true, 'min' => 1, 'max' => '255', 'desc'=> '可下载的HTTP路径'),
         );
@@ -187,6 +196,7 @@ class Information extends Api {
     public function puts()
     {
         $data = $_POST;
+
         $domain = new Domain();
         $_data = array();
         $rules = $this->putsrules();
@@ -229,6 +239,27 @@ class Information extends Api {
             );
         }
         return $domain->puts($data);
+
+    }
+
+    /**
+     * 更新数据索引信息接口
+     * @desc 通过文件编号(wjbh)更新数据索引信息
+     * @return int - 更新成功数据条数
+     */
+    public function update()
+    {
+        $rules = $this->getRules();
+        $rules = $rules['update'];
+        $keys = array_keys($rules);
+        $data = array();
+        foreach ($keys as $key) {
+            if ($this->$key !== null) {
+                $data[$key] = $this->$key;
+            }
+        }
+        $domain = new Domain();
+        return $domain->updateByArchiveNum($data);
 
     }
 

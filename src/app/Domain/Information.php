@@ -6,7 +6,6 @@ use PhalApi\Exception;
 
 class Information {
 
-
     public function insert($newData) {
         $newData['post_date'] = date('Y-m-d H:i:s', $_SERVER['REQUEST_TIME']);
 
@@ -121,8 +120,8 @@ class Information {
             if (empty($val['archive_num'])) {
                 $val['archive_num'] = $val['police_num'] . '_' . md5("{$id}_{$val['police_num']}_{$val['file_name']}_{$val['record_date']}_{$val['size']}");
             }
-            $data = $model->getByArchiveNum($val['archive_num']);
-            if ($data) {
+            $info = $model->getByArchiveNum($val['archive_num']);
+            if ($info) {
                 $rs['existed_ids'][$id] = $val['archive_num'];
                 continue;
             }
@@ -134,6 +133,30 @@ class Information {
             }
         }
         return $rs;
+
+    }
+
+    /**
+     * 通过 archive_num 更新数据
+     * @param array $data
+     * @return string
+     * @throws Exception\BadRequestException
+     */
+    public function updateByArchiveNum(array $data)
+    {
+        $model = new ModelInformation();
+        $archiveNum = $data['archive_num'];
+        $info = $model->getByArchiveNum($archiveNum);
+        if (empty($info)) {
+            throw new \PhalApi\Exception\BadRequestException("没有与之对应的数据(wjbh:{$data['archive_num']})", 1);
+        }
+        unset($data['archive_num']);
+        $rs = $model->updateByArchiveNum($archiveNum, $data);
+        if ($rs === false) {
+            throw new \PhalApi\Exception\BadRequestException("更新失败", 2);
+        } else {
+            return $rs;
+        }
 
     }
     

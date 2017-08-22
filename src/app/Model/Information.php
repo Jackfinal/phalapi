@@ -63,4 +63,11 @@ class Information extends NotORM {
 
     }
 
+    public function updateByArchiveNum($archiveNum, $data)
+    {
+        return $this->getORM()
+            ->where('archive_num', $archiveNum)
+            ->update($data);
+    }
+
 }
