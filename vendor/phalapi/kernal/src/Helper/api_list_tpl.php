@@ -140,7 +140,7 @@ $table_color_arr = explode(" ", "red orange yellow olive teal blue violet purple
         <div class="ui blue message">
             <strong>温馨提示：</strong> 此接口服务列表根据后台代码自动生成，可在接口类的文件注释的第一行修改左侧菜单标题。
         </div>
-        <p>&copy; Powered  By <a href="http://www.phalapi.net/" target="_blank">PhalApi <?php echo PHALAPI_VERSION; ?></a> <span id="version_update"></span> <p>
+       <!-- <p>&copy; Powered  By <a href="http://www.phalapi.net/" target="_blank">PhalApi <?php echo PHALAPI_VERSION; ?></a> <span id="version_update"></span> <p>-->
     </div>
     </div>
 </div>

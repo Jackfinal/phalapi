@@ -213,7 +213,7 @@ echo <<<EOT
         <div class="ui blue message">
           <strong>温馨提示：</strong> 此接口参数列表根据后台代码自动生成，可将 ?service= 改成您需要查询的接口/服务
         </div>
-        <p>&copy; Powered  By <a href="http://www.phalapi.net/" target="_blank">PhalApi {$version}</a><span id="version_update"></span></p>
+        <!--<p>&copy; Powered  By <a href="http://www.phalapi.net/" target="_blank">PhalApi {$version}</a><span id="version_update"></span></p>-->
         </div>
     </div>
     <script type="text/javascript">
