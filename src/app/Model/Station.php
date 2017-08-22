@@ -11,18 +11,17 @@ class Station extends NotORM {
         return 'stations';
     }
 
-    public function inserta($information)
+    public function addStation($station)
     {
-        $stationCount = $this->getStationByNumber($information['station_number']);
+        $stationCount = $this->getStationByNumber($station['station_number']);
         if($stationCount){
-            $rs = $this->getORM()->where('station_number',$information['station_number'])->update($information);
+            $rs = $this->getORM()->where('station_number',$station['station_number'])->update($station);
         }else{
-            $rs = $this->getORM()->insert($information);
+            $rs = $this->getORM()->insert($station);
         }
-         
-        
         return $rs;
     }
+    
     public function getStationByNumber($station_number) {
         return $this->getORM()->select('*')->where('station_number', $station_number)->fetchOne();
     }

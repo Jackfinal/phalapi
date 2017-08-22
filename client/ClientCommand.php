@@ -56,7 +56,6 @@ class ClientCommand extends CConsoleCommand {
         $this->upload = Upload::model()->find();
         $this->ftpPort = Yii::app()->params['ftpPort'] !== NULL ? Yii::app()->params['ftpPort'] : '21';
         $api_url = 'http://' . $this->cloudIp . '/api/public/';
-        //$api_url = 'http://dev.phalapi.com/';
         $this->clientApi = PhalApiClient::create()->withHost($api_url);
     }
 
@@ -71,31 +70,7 @@ class ClientCommand extends CConsoleCommand {
         $this->lightRun();
     }
 
-    /**
-     * 哥伦比亚备份音视频
-     * 每分钟执行一次的方法
-     *
-     */
-    public function actionOneMinute1() {
-        $this->syncTime();
-    }
-
-    /**
-     * 每五分钟执行一次的方法
-     *
-     */
-    public function actionFiveMinute() {
-        //上传数据
-        $this->weightRun();
-    }
-
-    /**
-     * 每半小时执行一次的方法
-     *
-     */
-    public function actionHalfAnHour() {
-
-    }
+            
 
     /**
      * 每小时执行一次的方法
@@ -104,14 +79,6 @@ class ClientCommand extends CConsoleCommand {
     public function actionOneHour() {
         //更新工作站相关的信息
         $this->weightRun2();
-    }
-
-    /**
-     * 每两小时执行一次的方法
-     *
-     */
-    public function actionTwoHour() {
-
     }
 
     /**
@@ -135,8 +102,6 @@ class ClientCommand extends CConsoleCommand {
         if ($this->workStation->cloudIp > 0) {
             //上报索引
             $this->actionPutinformations(0);
-            //下发公告
-            //$this->actionNotice();
         }
     }
 
@@ -216,10 +181,7 @@ class ClientCommand extends CConsoleCommand {
                 $this->getUserList();
                 $this->getUnitList();
                 $this->getCategoryList();
-                //更新权限部门信息
-                /* $this->actionUpdatePermission();
-                  $this->actionGetMatcheByNumber();
-                  $this->actionPutinformations(2); */
+                $this->actionPutinformations(0);
             } else {
 
             }
@@ -233,129 +195,6 @@ class ClientCommand extends CConsoleCommand {
         echo $archive_num;
         $result = $this->exec_curl(Toolkit::getTclApiUrl(long2ip($this->workStation->cloudIp), 'NotifyDeleteFile', $this->key), array('archive_num' => $archive_num));
         return $result;
-    }
-
-    /**
-     * 上传文件方式二(从平台获取上传文件信息和ftp信息,再上传数据文件)
-     * @return bool
-     */
-    public function ftpUploadFileOne() {
-        $data = $this->actionGetimportantfile();
-        if (empty($data)) {
-            //没有要上传的文件
-            return true;
-        }
-        $ftpinfo = $this->getFTPInfo();
-        if (empty($ftpinfo)) {
-            //没有可用的存储服务器
-            return true;
-        }
-        $testRs = Toolkit::testConntectFtp($ftpinfo['ftpip'], $ftpinfo['ftpUser'], $ftpinfo['ftpPwd'], $ftpinfo['ftpPort'], true);
-        print_r($ftpinfo);
-        if ($testRs['status'] != 1) {
-            //ftp error
-            return true;
-        }
-        $ftp = $testRs['ftp'];
-        foreach ($data as $key => $val) {
-            //先创建文件夹
-            $file = Toolkit::getInformationFileRealPath($val);
-            echo $file;
-            $val['station_number'] = $val['station_id'];
-            $mkdir = dirname(Toolkit::getInformationFilePath($val));
-            $upload_status = 0;
-            if (is_file($file)) {
-                @ftp_mkdir($ftp, $mkdir);
-                $fp = @fopen($file, 'rb');
-                $cloudFileName = $mkdir . '/' . $val['file_name'];
-                $length = @ftp_size($ftp, $cloudFileName);
-                $upload_status = @ftp_fput($ftp, $cloudFileName, $fp, FTP_BINARY, $length);
-                @fclose($fp);
-            } else {
-                $this->notifyDeleteFile($val['archive_num']);
-                Yii::app()->db->createCommand("update sdv_information set del_status=1 where archive_num='{$val['archive_num']}")->execute();
-                continue;
-            }
-            if ($upload_status) {
-                $result = $this->exec_curl(Toolkit::getTclApiUrl($this->cloudIp, 'updateFileStatus', $this->key), array(
-                    'storageNumber' => $ftpinfo['storageNumber'],
-                    'ftpAlias' => $ftpinfo['ftpAlias'],
-                    'archive_num' => $val['archive_num'],
-                    'police_num' => $val['police_num'],
-                ));
-                $result = json_decode($result, true);
-                if ($result['code'] == 1) {
-                    if ($this->workStation->uploaded_del == 1) {
-                        @unlink($file);
-                        Yii::app()->db->createCommand("update sdv_information set del_status=1,existed_file=2 where archive_num='{$val['archive_num']}'")->execute();
-                    } else {
-                        Yii::app()->db->createCommand("update sdv_information set existed_file=2 where archive_num='{$val['archive_num']}'")->execute();
-                    }
-                }
-            }
-        }
-        ftp_close($ftp);
-    }
-
-    /**
-     * 上传文件方式三(上传本地所有,再上传数据文件)
-     * @return bool
-     */
-    public function ftpUploadFileTwo() {
-        $data = Yii::app()->db->createCommand()->select('*')->from('sdv_information')->where('status=1 and existed_file=1 and del_status!=1')->limit(10)->queryAll();
-        if (empty($data)) {
-            //没有要上传的文件
-            return true;
-        }
-        $ftpinfo = $this->getFTPInfo();
-        if (empty($ftpinfo)) {
-            //没有可用的存储服务器
-            return true;
-        }
-        $testRs = Toolkit::testConntectFtp($ftpinfo['ftpip'], $ftpinfo['ftpUser'], $ftpinfo['ftpPwd'], $ftpinfo['ftpPort'], true);
-        print_r($ftpinfo);
-        if ($testRs['status'] != 1) {
-            //ftp error
-            return true;
-        }
-        $ftp = $testRs['ftp'];
-        foreach ($data as $key => $val) {
-            //先创建文件夹
-            $file = Toolkit::getInformationFileRealPath($val);
-            $val['station_number'] = $this->workStation->station_number;
-            $mkdir = dirname(Toolkit::getInformationFilePath($val));
-            $upload_status = 0;
-            if (is_file($file)) {
-                @ftp_mkdir($ftp, $mkdir);
-                $fp = @fopen($file, 'rb');
-                $cloudFileName = $mkdir . '/' . $val['file_name'];
-                $length = @ftp_size($ftp, $cloudFileName);
-                $upload_status = @ftp_fput($ftp, $cloudFileName, $fp, FTP_BINARY, $length);
-            } else {
-                $this->notifyDeleteFile($val['archive_num']);
-                Yii::app()->db->createCommand("update sdv_information set del_status=1 where archive_num='{$val['archive_num']}'")->execute();
-                continue;
-            }
-            if ($upload_status) {
-                $result = $this->exec_curl(Toolkit::getTclApiUrl($this->cloudIp, 'updateFileStatus', $this->key), array(
-                    'storageNumber' => $ftpinfo['storageNumber'],
-                    'ftpAlias' => $ftpinfo['ftpAlias'],
-                    'archive_num' => $val['archive_num'],
-                    'police_num' => $val['police_num'],
-                ));
-                $result = json_decode($result, true);
-                if ($result['code'] == 1) {
-                    if ($this->workStation->uploaded_del == 1) {
-                        @fclose($fp);
-                        @unlink($file);
-                        Yii::app()->db->createCommand("update sdv_information set del_status=1,existed_file=2 where archive_num='{$val['archive_num']}'")->execute();
-                    } else {
-                        Yii::app()->db->createCommand("update sdv_information set existed_file=2 where archive_num='{$val['archive_num']}'")->execute();
-                    }
-                }
-            }
-        }
-        ftp_close($ftp);
     }
 
     //获取部门列表
@@ -518,19 +357,19 @@ class ClientCommand extends CConsoleCommand {
     public function actionPutWsInfo() {
         $upload = Upload::model()->find();
         $cloudIp = long2ip($this->workStation->cloudIp);
+        $host = Yii::app()->params['host'];
         $workStation = Yii::app()->db->createCommand("select * from sdv_workstation  limit 1")->queryRow();
         if ($this->workStation->cloudIp <= 0) {
             return false;
         }
         $data = array(
-            'ip' => sprintf("%u", ip2long(@gethostbyname($_ENV['COMPUTERNAME']))),
+            'ip' => $host,
             'name' => $workStation['name'],
             'storage_size' => disk_total_space($this->config['params']['storage_driver_number']),
             'storage_rest' => disk_free_space($this->config['params']['storage_driver_number']),
             'memory_rate' => Toolkit::getMemoryRate(),
             'cpu_rate' => Toolkit::getCpuRate(),
             'mac_addr' => Toolkit::getMachineMac(),
-            'client_version' => $workStation['client_version'],
             'server_version' => $workStation['server_version'],
             'address' => $workStation['address'],
             'manager' => $workStation['manager'],
@@ -538,10 +377,9 @@ class ClientCommand extends CConsoleCommand {
             'station_number' => $workStation['station_number'],
             'unit_number' => $workStation['unit_number'],
             'type' => 1,
-            'ftpIp' => sprintf("%u", ip2long($upload->ip)),
+            'ftpIp' => $upload->ip,
             'ftp_user' => $upload->name,
             'ftp_pass' => $upload->password,
-            'cloudIp' => $workStation['cloudIp'],
             'merchant' => $workStation['merchant'],
         );
         $stationInfo = json_encode($data);
@@ -549,8 +387,8 @@ class ClientCommand extends CConsoleCommand {
         //echo Toolkit::getTclApiUrl(long2ip($this->workStation->cloudIp),"putWSInfo",$this->key);
         $rs = $this->clientApi->reset()
             ->withService('Station.stationInfoUpload')
-            ->withParams('stationInfo', $stationInfo)
-            //->setParams(http_build_query($data))
+            //->withParams('stationInfo', $stationInfo)
+            ->setParams(http_build_query($data))
             ->withTimeout(3000)
             ->request();
         $rsdata = $rs->getData();
@@ -575,35 +413,29 @@ class ClientCommand extends CConsoleCommand {
         $stations = Yii::app()->db->createCommand("select * from sdv_stations")->queryAll();
         foreach ($stations as $station) {
             $data = array(
-                'ip' => $station['ip'],
-                'name' => $station['name'],
-                'storage_size' => $station['storage_size'],
-                'storage_rest' => $station['storage_rest'],
-                'memory_rate' => $station['memory_rate'],
-                'cpu_rate' => $station['cpu_rate'],
-                'mac_addr' => $station['mac_addr'],
-                'client_version' => $station['client_version'],
-                'server_version' => $station['server_version'],
-                'address' => $station['address'],
-                'manager' => $station['manager'],
-                'phone' => $station['phone'],
-                'station_number' => $station['station_number'],
-                'unit_number' => $station['unit_number'],
-                'type' => $station['type'],
-                'ftpIp' => $station['ftpIp'],
-                'ftp_user' => $station['ftp_user'],
-                'ftp_pass' => $station['ftp_pass'],
-                'created_date' => $station['created_date'],
-                'online_date' => $station['online_date'],
-                'merchant' => $station['merchant'],
+            'ip' => $host,
+            'name' => $workStation['name'],
+            'storage_size' => disk_total_space($this->config['params']['storage_driver_number']),
+            'storage_rest' => disk_free_space($this->config['params']['storage_driver_number']),
+            'memory_rate' => Toolkit::getMemoryRate(),
+            'cpu_rate' => Toolkit::getCpuRate(),
+            'mac_addr' => Toolkit::getMachineMac(),
+            'server_version' => $workStation['server_version'],
+            'address' => $workStation['address'],
+            'manager' => $workStation['manager'],
+            'phone' => $workStation['phone'],
+            'station_number' => $workStation['station_number'],
+            'unit_number' => $workStation['unit_number'],
+            'type' => 1,
+            'ftpIp' => $upload->ip,
+            'ftp_user' => $upload->name,
+            'ftp_pass' => $upload->password,
+            'merchant' => $workStation['merchant'],
             );
-            $stationInfo = json_encode($data);
-            print_r($stationInfo);
-            //echo Toolkit::getTclApiUrl(long2ip($this->workStation->cloudIp),"putWSInfo",$this->key);
             $rs = $this->clientApi->reset()
                 ->withService('Station.stationInfoUpload')
-                ->withParams('stationInfo', $stationInfo)
-                //->setParams(http_build_query($data))
+                //->withParams('stationInfo', $stationInfo)
+                ->setParams(http_build_query($data))
                 ->withTimeout(3000)
                 ->request();
             $rsdata = $rs->getData();

@@ -13,7 +13,7 @@ class Unit extends Api {
     public function getRules() {
         return array(
             'getUnitList' => array(
-                'bmbh' 	=> array('name' => 'bmbh','require'=>true)
+                'bmbh' 	=> array('name' => 'bmbh','require'=>true,'desc'=> '部门编号')
             ),
         );
     }

@@ -13,7 +13,14 @@ class User extends Api {
     public function getRules() {
         return array(
             'getUserList' => array(
-                'bmbh' 	=> array('name' => 'bmbh', 'require' => true)
+                'bmbh' 	=> array('name' => 'bmbh', 'require' => true,'desc'=> '部门编号')
+            ),
+            'userInfoUpload' => array(
+            'yhbh' => array('name' => 'yhbh','require'=>true,'desc'=> '用户编号'),
+            'yhxm' => array('name' => 'yhxm','require'=>true,'desc'=> '用户姓名'),
+            'yhxb' => array('name' => 'yhxb','require'=>true,'desc'=> '用户性别'),
+            'dhhm' => array('name' => 'dhhm','require'=>true,'desc'=> '电话号码'),
+            'bmbh' => array('name' => 'bmbh','require'=>true,'desc'=> '部门编号'),
             ),
         );
     }
@@ -21,24 +28,28 @@ class User extends Api {
     /**
     * 用户上传接口
     * @desc 用于支队上传用户数据
-    * @return string title 标题
-    * @return string content 内容
-    * @return string version 版本，格式：X.X.X
-    * @return int time 当前时间戳
+    * @return int code 状态码 1为成功 0为失败
+    * @return string msg  错误信息
     */
     public function userInfoUpload()
     {
             $data = $_POST;
-            $rs = array();
-            $unit_numbers = array();  //警员的部门编号
+            $rs = array('code' => 0, 'msg' => '');
+            $user = array();  
             $this->data = array(
                     'suc_ids' => array(),
                     'fail_ids' => array(),
             );
-            $domain = new DomainInformatin();
-            $id = $domain->fileInfoUpload($data);
-            $rs['id'] = $id;  
-            return ;
+            $user['police_num'] = $data['yhbh'];
+            $user['name'] = $data['yhxm'];
+            $user['sex'] = $data['yhxb'];
+            $user['mobile_num'] = $data['dhhm'];
+            $user['Number'] = $data['bmbh'];
+           // return $user;
+            $domain = new DomainUser();
+            $id = $domain->userInfoUpload($user);
+            $rs['code'] = 1;  
+            return $rs;
     }
     
     /**

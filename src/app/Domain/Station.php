@@ -7,32 +7,32 @@ use PhalApi\Exception;
 class Station {
 
 
-    public function insert($station) {
+    public function stationInfoUpload($station) {
 
         $insertArr = array(
-            'name' => $station->name,
-            'ip' => $station->ip,
+            'name' => $station['name'],
+            'ip' => sprintf("%u\n",ip2long($station['ip'])),
             'created_date' => time(),
-            'station_number' => $station->station_number,
-            'manager' => $station->manager,
-            'phone' => $station->phone,
-            'address' => $station->address,
-            'unit_number' => $station->unit_number,
-            'ftpIp' => $station->ftpIp,
-            'ftp_user' => $station->ftp_user,
-            'ftp_pass' => $station->ftp_pass,
-            'type' => $station->type,
-            'storage_size' => $station->storage_size,
-            'storage_rest' => $station->storage_rest,
-            'memory_rate' => $station->memory_rate,
-            'cpu_rate' => $station->cpu_rate,
-            'mac_addr' => $station->mac_addr,
-            'client_version' => $station->client_version,
-            'server_version' => $station->server_version,
+            'station_number' => $station['station_number'],
+            'manager' => $station['manager'],
+            'phone' => $station['phone'],
+            'address' => $station['address'],
+            'unit_number' => $station['unit_number'],
+            'ftpIp' => $station['ftpIp'],
+            'ftp_user' => $station['ftp_user'],
+            'ftp_pass' => $station['ftp_pass'],
+            'type' => $station['type'],
+            'storage_size' => $station['storage_size'],
+            'storage_rest' => $station['storage_rest'],
+            'memory_rate' => $station['memory_rate'],
+            'cpu_rate' => $station['cpu_rate'],
+            'mac_addr' => $station['mac_addr'],
+            'client_version' => $station['client_version'],
+            'server_version' => $station['server_version'],
             'online_date' => time(),
         );
         $model = new ModelStation();
-        return $model->inserta($insertArr);
+        return $model->addStation($insertArr);
     }
 
     public function update($id, $newData) {
