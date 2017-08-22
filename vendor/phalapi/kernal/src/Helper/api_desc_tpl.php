@@ -6,12 +6,12 @@ echo <<<EOT
     <meta charset="utf-8">
     <title>{$service} - {$projectName} - 在线接口文档</title>
 
-    <link rel="stylesheet" href="/api/public/css/semantic.min.css">
-    <link rel="stylesheet" href="/api/public/css/table.min.css">
-    <link rel="stylesheet" href="/api/public/css/container.min.css">
-    <link rel="stylesheet" href="/api/public/css/message.min.css">
-    <link rel="stylesheet" href="/api/public/css/label.min.css">
-    <script src="/api/public/js/jquery.min.js"></script>
+    <link rel="stylesheet" href="css/semantic.min.css">
+    <link rel="stylesheet" href="css/table.min.css">
+    <link rel="stylesheet" href="css/container.min.css">
+    <link rel="stylesheet" href="css/message.min.css">
+    <link rel="stylesheet" href="css/label.min.css">
+    <script src="js/jquery.min.js"></script>
 </head>
 
 <body>
