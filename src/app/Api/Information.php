@@ -179,9 +179,9 @@ class Information extends Api {
     /**
      * 批量上传索引接口
      * @desc 批量上传索引,数据批量入库;通过POST_ROWS 方式 POST 索引列表进,每一个列表都是为包含下列参数的map数组
-     * @return array suc_ids     成功入库的ids 包括(existed_ids)
-     * @return array existed_ids 通过wjbh检查 已经存在的ids 不进行入库
-     * @return array fail_ids    入库失败的 ids
+     * @return array suc_ids     成功入库的数据 {id : wjbh}
+     * @return array existed_ids 通过文件编号(wjbh)检查已经存在的数据,不进行入库 {id : wjbh}
+     * @return array fail_ids    入库失败的数据 {id : wjbh}
      * @throws BadRequestException
      */
     public function puts()

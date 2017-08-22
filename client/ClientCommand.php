@@ -94,7 +94,7 @@ class ClientCommand extends CConsoleCommand {
      *
      */
     public function actionHalfAnHour() {
-        
+
     }
 
     /**
@@ -111,7 +111,7 @@ class ClientCommand extends CConsoleCommand {
      *
      */
     public function actionTwoHour() {
-        
+
     }
 
     /**
@@ -221,7 +221,7 @@ class ClientCommand extends CConsoleCommand {
                   $this->actionGetMatcheByNumber();
                   $this->actionPutinformations(2); */
             } else {
-                
+
             }
         } catch (Exception $e) {
             echo 'Message: ' . $e->getMessage();
@@ -358,7 +358,7 @@ class ClientCommand extends CConsoleCommand {
         ftp_close($ftp);
     }
 
-    //获取部门列表 
+    //获取部门列表
     public function getUnitList() {
         $cloudIp = long2ip($this->workStation->cloudIp);
         $unit_number = $this->workStation->unit_number;
@@ -475,18 +475,23 @@ class ClientCommand extends CConsoleCommand {
                 $result = $rs->getData();
                 $sucIdsStr = '';
                 if (isset($result['suc_ids']) && count($result['suc_ids']) > 0) {
-                    //Yii::app()->db->createCommand()->update('{{information}}', array('status2' => 1), array('in', 'id', $result['suc_ids']));
-                    //$sucIdsStr = implode(',', $result['suc_ids']);
+                    $sucIds = array_keys($result['suc_ids']);
+                    //Yii::app()->db->createCommand()->update('{{information}}', array('status2' => 1), array('in', 'id', $sucIds));
+                    $sucIdsStr = implode(',', $sucIds);
                 }
                 $failIdsStr = '';
                 if (isset($result['fail_ids']) && count($result['fail_ids']) > 0) {
                     //上传索引失败的数据 status 改为2
-                    //Yii::app()->db->createCommand()->update('{{information}}', array('status2' => 2), array('in', 'id', $result['fail_ids']));
-                    //$failIdsStr = implode(',', $result['fail_ids']);
+                    $failIds = array_keys($result['suc_ids']);
+                    //Yii::app()->db->createCommand()->update('{{information}}', array('status2' => 2), array('in', 'id', $failIds));
+                    $failIdsStr = implode(',', $failIds);
                 }
                 $existedIdsStr = '';
-                if (isset($result['fail_ids']) && count($result['fail_ids']) > 0) {
-                    $existedIdsStr = implode(',', $result['existed_ids']);
+                if (isset($result['existed_ids']) && count($result['existed_ids']) > 0) {
+                    //已经存在也表示 入库成功, 因为archive_num保证唯一
+                    $existedIds = array_keys($result['existed_ids']);
+                    Yii::app()->db->createCommand()->update('{{information}}', array('status2' => 1), array('in', 'id', $existedIds));
+                    $existedIdsStr = implode(',', $existedIds);
                 }
                 empty($sucIdsStr) || Toolkit::log('info', "Information.Puts suc_ids {$sucIdsStr} ", 'Api');
                 empty($failIdsStr) || Toolkit::log('error', "Information.Puts fail_ids {$failIdsStr} ", 'Api');

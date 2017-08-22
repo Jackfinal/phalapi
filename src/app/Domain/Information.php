@@ -123,15 +123,14 @@ class Information {
             }
             $data = $model->getByArchiveNum($val['archive_num']);
             if ($data) {
-                $rs['suc_ids'][] = $id;
-                $rs['existed_ids'][] = $id;
+                $rs['existed_ids'][$id] = $val['archive_num'];
                 continue;
             }
             try {
                 $model->insert($val);
-                $rs['suc_ids'][] = $id;
+                $rs['suc_ids'][$id] = $val['archive_num'];
             } catch (Exception $e) {
-                $rs['fail_ids'][] = $id;
+                $rs['fail_ids'][$id] = $val['archive_num'];
             }
         }
         return $rs;
